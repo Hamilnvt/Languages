@@ -1,11 +1,14 @@
 package main
 
 import (
-  _"fmt"
-  "NFA/NFA"
+  "fmt"
+  _"NFA/NFA"
+  "NFA/Grammar"
 )
 
 func main() {
-  NFA.Test_minimize()
+  rules := []string{"S -> aS | a"}
+  g := Grammar.MakeGrammar(rules)
+  fmt.Println(g)
 }
 
