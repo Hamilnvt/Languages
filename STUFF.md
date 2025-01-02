@@ -38,7 +38,7 @@
 [] func isDFA che controlla se non ci sono transizioni epsilon e se per ogni stato c'è una transizione per ogni terminale
 
 ## Grammar
-[] String
+[x] String
 
 # Cose da leggere
 
