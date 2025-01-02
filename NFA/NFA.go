@@ -55,9 +55,17 @@ func (N *NFA) AddState(label string, isFinal bool) *State {
 
 func (N *NFA) removeState(label string) {
   //TODO
-  // - cambiare gli indici
+  // - cambiare gli indici (è molto lungo perché devo cambiare anche tutte le transizioni)
   //initial_state := N.States[N.InitialState]
   //i := 0
+  stateToRemove := N.GetStateByLabel(label).Index
+  if stateToRemove == N.InitialState {
+    panic("Can't remove initial state")
+  }
+  N.States[stateToRemove] = N.States[len(N.States)-1]
+  N.States = N.States[:len(N.States)-1]
+  N.n--
+  //TODO non funziona così, dovrò cambiare gli indici
 }
 
 func (N *NFA) AddTransition(label string, q1, q2 int) {
@@ -74,12 +82,13 @@ func (N *NFA) AddTransition(label string, q1, q2 int) {
 }
 
 func (N *NFA) removeTransition(label string, q1, q2 int) {
-  fmt.Printf("Removing transition: %v -%v-> %v\n", N.States[q1].label, label, N.States[q2].label)
+  //fmt.Printf("Removing transition: %v -%v-> %v\n", N.States[q1].label, label, N.States[q2].label)
   T := N.States[q1].adjac[label]
   for i, p := range T {
     if p.Index == q2 {
       T[i] = T[len(T)-1]
       N.States[q1].adjac[label] = T[:len(T)-1]
+      N.m--
     }
     if len(T) == 0 {
       delete(N.States[q1].adjac, label)
@@ -94,7 +103,7 @@ func (N DFA) Delta(q int, w string) int {
   for _, a := range w {
     adjac, ok := currentState.adjac[string(a)]
     //fmt.Println("nextState:", adjac)
-    if !ok {
+    if !ok || len(adjac) == 0 {
       return -1
     } else {
       currentState = adjac[0]
@@ -327,7 +336,7 @@ func (N NFA) Copy() NFA {
 func (N DFA) Minimize() DFA {
   table := make(map[IntPair]StairTableEntry)
   pairs := make([]IntPair, 0)
-  fmt.Println("Table Initialization")
+  //fmt.Println("Table Initialization")
   for i := 1; i < len(N.States); i++ {
     for j := 0; j < len(N.States)-1; j++ {
       if i != j {
@@ -337,46 +346,46 @@ func (N DFA) Minimize() DFA {
           p = IntPair{i, j}
           if N.States[i].isFinal && !N.States[j].isFinal || !N.States[i].isFinal && N.States[j].isFinal {
             table[p] = StairTableEntry{p, 0}
-            fmt.Printf("(%v, %v): %v\n", p.a, p.b, 0)
+            //fmt.Printf("(%v, %v): %v\n", p.a, p.b, 0)
           } else {
             table[p] = StairTableEntry{p, -1}
             pairs = append(pairs, p)
-            fmt.Printf("(%v, %v): %v\n", p.a, p.b, -1)
+            //fmt.Printf("(%v, %v): %v\n", p.a, p.b, -1)
           }
         }
       }
     }
   }
-  fmt.Println("Pairs to mark")
-  for _, p := range pairs {
-    fmt.Println(p)
-  }
+  //fmt.Println("Pairs to mark")
+  //for _, p := range pairs {
+  //  fmt.Println(p)
+  //}
 
   i := 1
   done := false
   for !done && len(pairs) > 0 {
-    fmt.Println("\nIteration", i)
+    //fmt.Println("\nIteration", i)
     done = true
     pair_index := 0
     for pair_index < len(pairs) {
       pair := table[pairs[pair_index]]
-      fmt.Printf("\nConsidering pair (%v, %v)\n", pair.a, pair.b)
+      //fmt.Printf("\nConsidering pair (%v, %v)\n", pair.a, pair.b)
       found := false
       str_len := 1
       n := 0
       for !found && str_len <= i {
         perm_n := int(math.Pow(float64(len(N.Sigma)), float64(str_len)))
-        fmt.Printf("P(%v, %v) = %v, n=%v\n", len(N.Sigma), str_len, perm_n, n)
+        //fmt.Printf("P(%v, %v) = %v, n=%v\n", len(N.Sigma), str_len, perm_n, n)
         for !found && n < perm_n {
           w := GetPermutationString(N.Sigma, str_len, n)
-          fmt.Printf("'%v', len=%v, n=%v, w='%v'\n", N.Sigma, str_len, n, w)
+          //fmt.Printf("'%v', len=%v, n=%v, w='%v'\n", N.Sigma, str_len, n, w)
 
           p1 := N.Delta(pair.a, w)
           p2 := N.Delta(pair.b, w)
           if p1 == -1 || p2 == -1 {
             panic(fmt.Sprintf("There isn't a transition %v -%v-> %v\n", pair.a, w, pair.b))
           }
-          fmt.Printf("(%v, %v) -%v-> (%v, %v)\n", pair.a, pair.b, w, p1, p2)
+          //fmt.Printf("(%v, %v) -%v-> (%v, %v)\n", pair.a, pair.b, w, p1, p2)
 
           if p1 != p2 {
             delta_pair, ok := table[IntPair{p1, p2}]
@@ -387,21 +396,21 @@ func (N DFA) Minimize() DFA {
             } else if ok_inverted {
               actual_delta_pair = delta_pair_inverted
             }
-            fmt.Println("delta pair:", actual_delta_pair)
+            //fmt.Println("delta pair:", actual_delta_pair)
             if actual_delta_pair.mark != -1 && actual_delta_pair.mark < i {
               pair.mark = i
               table[IntPair{pair.a, pair.b}] = pair
-              fmt.Println("Marked at", i)
+              //fmt.Println("Marked at", i)
               found = true
               pairs[pair_index] = pairs[len(pairs)-1]
               pairs = pairs[:len(pairs)-1]
               done = false
 
             } else {
-              fmt.Println("Can't be marked at", i)
+              //fmt.Println("Can't be marked at", i)
             }
           } else {
-            fmt.Println("They're the same state")
+            //fmt.Println("They're the same state")
           }
           n++
         }
@@ -409,28 +418,25 @@ func (N DFA) Minimize() DFA {
       }
       pair_index++
     }
-    fmt.Println("\nTable after iteration", i)
-    for _, pair := range table {
-      fmt.Printf("(%v, %v): %v\n", pair.a, pair.b, pair.mark)
-    }
-    fmt.Println("Pairs to mark after iteration", i)
-    for _, pair := range pairs {
-      fmt.Println(pair)
-    }
+    //fmt.Println("\nTable after iteration", i)
+    //for _, pair := range table {
+    //  fmt.Printf("(%v, %v): %v\n", pair.a, pair.b, pair.mark)
+    //}
+    //fmt.Println("Pairs to mark after iteration", i)
+    //for _, pair := range pairs {
+    //  fmt.Println(pair)
+    //}
     i++
   }
-  fmt.Println("Table")
-  for _, pair := range table {
-    fmt.Printf("(%v, %v): %v\n", pair.a, pair.b, pair.mark)
-  }
-  fmt.Println("Stati indistinguibili")
-  for _, pair := range pairs {
-    fmt.Println(pair)
-  }
-  //ora è giusto, bisogna soltanto fondere gli stati TODO
-  //Ho perso tutto :)
-  // TODO:
-  // a questo punto provo a creare il nuovo dfa
+  //fmt.Println("Table")
+  //for _, pair := range table {
+  //  fmt.Printf("(%v, %v): %v\n", pair.a, pair.b, pair.mark)
+  //}
+  //fmt.Println("Stati indistinguibili")
+  //for _, pair := range pairs {
+  //  fmt.Println(pair)
+  //}
+
   statesToFuse := make([][]int, 0)
   for _, pair := range pairs {
     if len(statesToFuse) == 0 {
@@ -457,9 +463,19 @@ func (N DFA) Minimize() DFA {
       }
     } 
   }  
-  fmt.Println("Classi di equivalenza:", statesToFuse)
+  //fmt.Println("Classi di equivalenza in N:", statesToFuse)
   
   N_min := N.Copy()
+  for i, class := range statesToFuse {
+    new_class := make([]int, 0)
+    for _, state := range class {
+      new_class = append(new_class, N_min.GetStateByLabel(N.States[state].label).Index)
+    }
+    statesToFuse[i] = new_class
+  }
+  //fmt.Println("Classi di equivalenza in N_min:", statesToFuse)
+
+  initialStateHasChanged := false
   for _, class := range statesToFuse {
     new_state_final := false
     for _, state := range class {
@@ -469,27 +485,48 @@ func (N DFA) Minimize() DFA {
       }
     }
     new_state := N_min.AddState(fmt.Sprintf("q%v", N_min.n), new_state_final)
-    fmt.Println("New state:", new_state)
+    if isIntInSlice(N_min.InitialState, class) {
+      if initialStateHasChanged {
+        panic("NFA can't have more than one initial state")
+      } else {
+        N_min.InitialState = new_state.Index
+        initialStateHasChanged = true
+      }
+    }
+    //fmt.Println("New state:", new_state)
     for _, q := range N_min.States {
       if !isIntInSlice(q.Index, class) {
         for _, a := range N_min.Sigma {
           d := N_min.Delta(q.Index, string(a))
-          if isIntInSlice(d, class) {
-            N_min.removeTransition(string(a), q.Index, d)
-            N_min.AddTransition(string(a), q.Index, new_state.Index)
+          if d == -1 {
+            if isIntInSlice(d, class) {
+              N_min.removeTransition(string(a), q.Index, d)
+              N_min.AddTransition(string(a), q.Index, new_state.Index)
+            }
           }
         }
       }
     }
-    //TODO
     for _, q := range class {
       for _, a := range N_min.Sigma {
-        d := N_min.Delta(q.Index, string(a))
-        if isIntInSlice(d, class) {
-          N_min.removeTransition(string(a), q.Index, d)
-          N_min.AddTransition(string(a), q.Index, new_state.Index)
+        d := N_min.Delta(q, string(a))
+        if d != -1 {
+          N_min.removeTransition(string(a), q, d)
+          _, ok := N_min.States[new_state.Index].adjac[string(a)]
+          if !ok {
+            if isIntInSlice(d, class) {
+              N_min.AddTransition(string(a), new_state.Index, new_state.Index)
+            } else {
+              N_min.AddTransition(string(a), new_state.Index, d)
+            }
+          }
         }
       }
+    }
+  }
+  for _, class := range statesToFuse {
+    for _, state := range class {
+      N_min.removeState(N_min.States[state].label)
     }
   }
   return N_min
@@ -562,8 +599,8 @@ func test_NFA2DFA() {
 }
 
 func Test_minimize() {
-  //N := Test_MakeNFA_to_minimize()
-  N := Test_MakeNFA_to_minimize_mapiùfacile()
+  N := Test_MakeNFA_to_minimize()
+  //N := Test_MakeNFA_to_minimize_mapiùfacile()
   fmt.Println(N)
 
   M := N.Minimize()

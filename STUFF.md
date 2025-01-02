@@ -3,12 +3,13 @@
 [x] NFA
 [] DFA
 - [x] fattorizzare, per ora è tutto nel main
-- [] minimizzare
+- [x] minimizzare
 [] Grammatica
     > stavo pensando a produzione del tipo A -> K1 | ... | K2 dove gli spazi sono necessari e dividono perfettamente le varie produzioni
 [] analizzatore lessicale
 [] PDA
 [] DPDA
+[] parser LL(1)
 [] parser LR(0)
 [] parser SLR(1) ?
 [] parser LR(1)
