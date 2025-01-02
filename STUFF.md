@@ -5,6 +5,7 @@
 - [x] fattorizzare, per ora è tutto nel main
 - [] minimizzare
 [] Grammatica
+    > stavo pensando a produzione del tipo A -> K1 | ... | K2 dove gli spazi sono necessari e dividono perfettamente le varie produzioni
 [] analizzatore lessicale
 [] PDA
 [] DPDA
@@ -18,8 +19,11 @@
 
 [x] Labels degli stati generati automaticamente
 [x] Possibilità di ottenere gli stati con le labels
-[] serve un modo per ottenere lo stato di arrivo dallo stato di partenza e la label della transizione (insomma, serve la delta, così da poter fare delta(q, a) e ottenere l'insieme di stati su cui si arriva):
+[x] serve un modo per ottenere lo stato di arrivo dallo stato di partenza e la label della transizione (insomma, serve la delta, così da poter fare delta(q, a) e ottenere l'insieme di stati su cui si arriva):
     > è un campo dello State, le cui transizioni voglio che siano una mappa invece che un array
+    - [] delta func ? (nel DFA la delta potrebbe restituire un solo stato (però sembra difficile questa cosa perché non collabora con tutto il rest))
+[] RemoveState
+[] RemoveTransition ?
 [] NFA ha una mappa da int/string a stato:
     > sorge un dilemma: se voglio le mappe si può fare nei seguenti modi:
     1. 2 mappe: una con le label e una con gli indici (quindi una mappa e un array, suppongo)
