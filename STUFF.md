@@ -6,8 +6,8 @@
 - [x] minimizzare
 [] Grammatica
     > stavo pensando a produzione del tipo A -> K1 | ... | K2 dove gli spazi sono necessari e dividono perfettamente le varie produzioni
-- [] Simboli annulabili
-- [] First
+- [x] Simboli annulabili
+- [x] First
 - [] Follow
 - [] Semplificazione ? //Potrebbe essere troppo complicato e troppo poco utile
 [] analizzatore lessicale
@@ -39,6 +39,8 @@
 
 ## Grammar
 [x] String
+[] First and Follow table in Grammar (as maps)
+    > si potrebbe fare che se calcola il first di un nonterminale lo inserisce nella mappa e se lo deve ricacolare, prima di farlo controlla la tabella
 
 # Cose da leggere
 
