@@ -41,6 +41,9 @@
 [x] String
 [] First and Follow table in Grammar (as maps)
     > si potrebbe fare che se calcola il first di un nonterminale lo inserisce nella mappa e se lo deve ricacolare, prima di farlo controlla la tabella
+[o] Parsing grammar from file
+- [] fare in modo che accetti solo file con estensione .g (for the meme)
+- [] commenti anche a metà riga (mettere # nei simboli slashati e migliorare il parser)
 
 # Cose da leggere
 

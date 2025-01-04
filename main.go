@@ -7,6 +7,11 @@ import (
 )
 
 func main() {
+  G := Grammar.ParseGrammar("./Grammar/Grammars/SimpleGrammar.g")
+  fmt.Println(G)
+}
+
+func grammar_example() {
   rules := []string{
     "S -> BCA | ABE ",
     "A -> a | aDb | bSc ",
