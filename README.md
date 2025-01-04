@@ -10,27 +10,27 @@ Someday the set of tools will comprehend:
   -  [ ] Lexical Analyzer
 - Grammars:
   - [x] Grammar parsing from file
-  - [ ] Nullable symbols
+  - [x] Nullable symbols
   - [x] First
   - [ ] Follow
   - [ ] Generators
   - [ ] Reachable symbols
   - [ ] Singular symbols
   - [ ] Grammars simplification:
-        - [ ] ε-productions
-        - [ ] singular productions
-        - [ ] useless symbols
-        - [ ] left recursion (direct and indirect)
+    - [ ] ε-productions
+    - [ ] singular productions
+    - [ ] useless symbols
+    - [ ] left recursion (direct and indirect)
     
 - Syntax Analysis:
   - [ ] Creation of PDA from Grammar
   - [ ] Creation of DPDA from Grammar
   - [ ] Top-Down parser LL(1)
   - [ ] Bottom-Up parsers:
-        - [ ] LR(0)
-        - [ ] SLR(1)
-        - [ ] LR(1)
-        - [ ] LALR(1)
+    - [ ] LR(0)
+    - [ ] SLR(1)
+    - [ ] LR(1)
+    - [ ] LALR(1)
 
 # Parsing Grammar from file
 
