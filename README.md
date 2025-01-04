@@ -1,8 +1,8 @@
 Work in progress
 
 # What is this?
-It's a personal project about my university studies on programming languages.
-It has the ambition to recreate some sort of compiler compiler like yacc-lex (also, I'm learning Go, I don't know why, should've gone with Rust? Let me know).
+It's a personal project about my university studies on programming languages.\
+It has the ambition to recreate some sort of compiler compiler like yacc-lex (also, I'm learning Go, I don't know why, should've gone with Rust? Let me know).\
 Someday the set of tools will comprehend:
 - Lexical Analysis:
   -  [x] Creation of NFA from regular expressions
@@ -78,9 +78,9 @@ R: {
   A_i -> b_i0 | ... | b_ik
 }
 ```
-Anything other than that will throw a panic error at your face.
+Anything other than that will throw a panic error at your face.\
 
-A Grammar is a type:
+A Grammar is a type:\
 ```go
 type Grammar struct {
   S  string              // initial symbol
