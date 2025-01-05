@@ -1,0 +1,14 @@
+# TODO 
+# - white space is removed
+# - simboli di cui fare escape: ' ', '$', '|', '*', '(', ')', '[', ']', '+', '?'
+# - devo trovare un modo per implementare lo zucchero sintattico:
+#   +: a+ = (aa*)
+#   ?: a? = (a | \eps)
+#   []: [0-9] = (0 | ... | 9)
+#   ' ': concatenazione (anche senza spazio, ma necessario per gli identificatori)
+# - ci sarà una tranquilla symbol table
+
+DIGIT:   [0-9]a
+INTEGER: [1-9] $DIGIT *
+FLOAT:   $INTEGER . $DIGIT *
+

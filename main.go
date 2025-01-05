@@ -2,13 +2,47 @@ package main
 
 import (
   "fmt"
-  _"NFA/NFA"
-  "NFA/Grammar"
+  _"Languages/NFA"
+  "Languages/Grammar"
+  "Languages/LexicalAnalyzer"
+  "Languages/Parsing"
 )
 
 func main() {
-  G := Grammar.ParseGrammar("./Grammar/Grammars/SimpleGrammar.g")
+  fmt.Println("Si comincia il top-down parsing")
+  G := Grammar.ParseGrammar("./Grammar/Grammars/LL1_prova.g")
   fmt.Println(G)
+  parser, err := Parsing.MakeParserTopDownLL1(G)
+  if err != nil {
+    panic(err)
+  }
+  //fmt.Println(parser)
+  input := "a*(b+a)"
+  tree, err := parser.Parse(input)
+  if err != nil {
+    panic(err)
+  }
+  fmt.Println(tree)
+}
+
+func makeLA() {
+  la := LexicalAnalyzer.MakeLexicalAnalyzer("./LexicalAnalyzer/LAs/prova.la") 
+  fmt.Println(la)
+}
+
+func grammar_first_and_follow() {
+  G := Grammar.ParseGrammar("./Grammar/Grammars/RegExpGrammar.g")
+  fmt.Println(G)
+
+  fmt.Println("First:")
+  for _, nt := range G.NT {
+    fmt.Println(nt,G.First(nt))
+  }
+
+  fmt.Println("\nFollow:")
+  for _, nt := range G.NT {
+    fmt.Println(nt, G.Follow(nt))
+  }
 }
 
 func grammar_example() {

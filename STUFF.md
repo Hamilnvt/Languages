@@ -1,24 +1,24 @@
 # Workflow
 
 [x] NFA
-[] DFA
+[ ] DFA
 - [x] fattorizzare, per ora è tutto nel main
 - [x] minimizzare
-[] Grammatica
+[ ] Grammatica
     > stavo pensando a produzione del tipo A -> K1 | ... | K2 dove gli spazi sono necessari e dividono perfettamente le varie produzioni
 - [x] Simboli annulabili
 - [x] First
-- [] Follow
-- [] Semplificazione ? //Potrebbe essere troppo complicato e troppo poco utile
-[] analizzatore lessicale
-[] PDA
-[] DPDA
-[] parser LL(1)
-[] parser LR(0)
-[] parser SLR(1) ?
-[] parser LR(1)
-[] parser LALR(1)
-[] cominciare a pensare al mio linguaggio
+- [x] Follow
+- [ ] Semplificazione ? //Potrebbe essere troppo complicato e troppo poco utile
+[ ] lexical analyzer
+[ ] PDA
+[ ] DPDA
+[ ] parser LL(1)
+[ ] parser LR(0)
+[ ] parser SLR(1) ?
+[ ] parser LR(1)
+[ ] parser LALR(1)
+[ ] cominciare a pensare al mio linguaggio
 
 # TODO
 
@@ -27,23 +27,28 @@
 [x] Possibilità di ottenere gli stati con le labels
 [x] serve un modo per ottenere lo stato di arrivo dallo stato di partenza e la label della transizione (insomma, serve la delta, così da poter fare delta(q, a) e ottenere l'insieme di stati su cui si arriva):
     > è un campo dello State, le cui transizioni voglio che siano una mappa invece che un array
-    - [] delta func ? (nel DFA la delta potrebbe restituire un solo stato (però sembra difficile questa cosa perché non collabora con tutto il rest))
-[] RemoveState
+    - [ ] delta func ? (nel DFA la delta potrebbe restituire un solo stato (però sembra difficile questa cosa perché non collabora con tutto il rest))
+[ ] RemoveState
 [x] RemoveTransition
-[] NFA ha una mappa da int/string a stato:
+[ ] NFA ha una mappa da int/string a stato:
     > sorge un dilemma: se voglio le mappe si può fare nei seguenti modi:
     1. 2 mappe: una con le label e una con gli indici (quindi una mappa e un array, suppongo)
     2. 1 mappa[string]: ha il doppio degli elementi e map[label] = elt = map[index], con qualche accortezza questo non è male (func getEltAt(i int) = map[label] = elt, dove getEltAt passa l'intero come stringa)
-[] Sigma sarà uno slice di string, dove ogni stringa avrà lunghezza 1
-[] func isDFA che controlla se non ci sono transizioni epsilon e se per ogni stato c'è una transizione per ogni terminale
+[ ] Sigma sarà uno slice di string, dove ogni stringa avrà lunghezza 1
+[ ] func isDFA che controlla se non ci sono transizioni epsilon e se per ogni stato c'è una transizione per ogni terminale
+[ ] func cat: concatena due NFA se il primo ha un solo stato finale (fonde f1 e i2)
 
 ## Grammar
 [x] String
-[] First and Follow table in Grammar (as maps)
+[ ] First and Follow table in Grammar (as maps)
     > si potrebbe fare che se calcola il first di un nonterminale lo inserisce nella mappa e se lo deve ricacolare, prima di farlo controlla la tabella
 [o] Parsing grammar from file
-- [] fare in modo che accetti solo file con estensione .g (for the meme)
-- [] commenti anche a metà riga (mettere # nei simboli slashati e migliorare il parser)
+- [x] fare in modo che accetti solo file con estensione .g (for the meme)
+- [ ] commenti anche a metà riga (mettere # nei simboli slashati e migliorare il parser)
+- [ ] \eps = ε
+- [x] | deve essere escaped
+- [ ] definizioni all'inizio del file (tipo alias) ? 
+- [ ] se C = a | ... | z , posso scrivere questa notazione e lo capisce
 
 # Cose da leggere
 

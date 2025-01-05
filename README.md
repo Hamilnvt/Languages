@@ -77,10 +77,12 @@ R: {
   .
   A_i -> b_i0 | ... | b_ik
 }
-```
-Anything other than that will throw a panic error at your face.\
 
-A Grammar is a type:\
+# If you want to use the character | in the rules you'll have to escape it like this \|
+```
+Anything other than that will throw a panic error at your face.
+
+A Grammar is a type:
 ```go
 type Grammar struct {
   S  string              // initial symbol

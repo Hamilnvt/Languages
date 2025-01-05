@@ -1,3 +1,3 @@
-module NFA
+module Languages
 
 go 1.19
