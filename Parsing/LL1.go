@@ -102,39 +102,44 @@ func (parser LL1) Parse(input string) (DerivationTree, error) {
   ic := 0
   fmt.Println("Parsing", strings.Join(parser.input, ""))
 
-  //TODO stampa cose strane (simboli non ASCII)
-  for X := parser.stack.Top(); X != nil; X = parser.stack.Top() {
-    fmt.Print(*X, "\t", strings.Join(parser.input, "")[ic:])
-    output := false
-    if parser.grammar.IsTerminal(*X) {
-      if *X == parser.input[ic] {
+  tree := makeDerivationTree(parser.grammar, parser.grammar.S)
+  w := tabwriter.NewWriter(os.Stdout, 0, 8, 2, ' ', 0)
+  for X := parser.stack.Top(); X != ""; X = parser.stack.Top() {
+    fmt.Fprintf(w, "stack: %v\t|  input: %v\t", parser.stack, strings.Join(parser.input, "")[ic:]) 
+    if parser.grammar.IsTerminal(X) {
+      if X == parser.input[ic] {
         parser.stack.Pop()
         ic++
+        fmt.Fprintf(w, "|  match %v\t", X)
       } else {
-        fmt.Println()
+        fmt.Fprintln(w)
+        w.Flush()
         return DerivationTree{}, errors.New(fmt.Sprintf("No match for Terminal at index %v, symbol %v.", ic, parser.input[ic]))
       }
     } else {
-      prod, ok := parser.table[TablePair{A:*X, a:parser.input[ic]}]
-      //fmt.Printf("\nTable[%v, %v] = %v\n", *X, parser.input[ic], prod)
+      prod, ok := parser.table[TablePair{A:X, a:parser.input[ic]}]
+      //fmt.Fprintf(w, "|  ParsingTable[%v, %v] = %v\t", X, parser.input[ic], prod)
       if ok {
         parser.stack.Pop()
-        for j := len(prod)-1; j >= 0; j-- {
-          parser.stack.Push(string(prod[j]))
+        if prod != EPS {
+          for j := len(prod)-1; j >= 0; j-- {
+            parser.stack.Push(string(prod[j]))
+          }
         }
-        output = true
-        fmt.Printf("\t%v -> %v\n", *X, prod)
+        fmt.Fprintf(w, "|  output: %v -> %v", X, prod)
+        tree.addChildren(prod)
       } else {
-        fmt.Println()
+        fmt.Fprintln(w)
+        w.Flush()
         return DerivationTree{}, errors.New(fmt.Sprintf("No match for NonTerminal at index %v, symbol %v.", ic, parser.input[ic]))
       }
     }
-    if !output {
-      fmt.Println()
-    }
+    fmt.Fprintln(w, "\t")
   }
+  fmt.Fprintln(w, "stack:\t|  input: $\t|  String accepted!")
 
-  return DerivationTree{}, errors.New("TODO")
+  w.Flush()
+  return tree, nil
 }
 
 type Stack struct {
@@ -146,12 +151,12 @@ func (stack Stack) String() (res string) {
   }
   return
 }
-func (stack Stack) Top() *string {
+func (stack Stack) Top() string {
   length := len(stack.stack)
   if length == 0 {
-    return nil
+    return ""
   } else {
-    return &stack.stack[length-1]
+    return stack.stack[length-1]
   }
 }
 func (stack Stack) isEmpty() bool {

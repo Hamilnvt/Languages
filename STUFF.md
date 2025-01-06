@@ -13,7 +13,8 @@
 [ ] lexical analyzer
 [ ] PDA
 [ ] DPDA
-[ ] parser LL(1)
+[x] parser LL(1)
+[ ] parse tree
 [ ] parser LR(0)
 [ ] parser SLR(1) ?
 [ ] parser LR(1)
@@ -49,11 +50,17 @@
 - [x] | deve essere escaped
 - [ ] definizioni all'inizio del file (tipo alias) ? 
 - [ ] se C = a | ... | z , posso scrivere questa notazione e lo capisce
+- [ ] togliere S, T e NT e dare delle regole precise per parsare (S è il NonTerminale della prima regola, gli altri NonTerminali si prendono dalle regole successive e tutti gli altri simboli sono terminali)
+- [ ] spazio per le definizioni regolari (i pattern dei token)
+
+## Parsing
+[ ] abstract parsing tree from the concrete one
 
 # Cose da leggere
 
 - https://www.reddit.com/r/ProgrammingLanguages/comments/15cxb1a/advice_on_building_an_lalrk_parser_generator/?rdt=62283
 - paper sul lexical analyzer
+- https://www.sciencedirect.com/topics/computer-science/parse-tree#:~:text=A%20parse%20tree%20is%20a,symbol%20used%20in%20the%20derivation.
 
 # Cos'ho capito
 

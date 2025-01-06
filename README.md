@@ -12,7 +12,7 @@ Someday the set of tools will comprehend:
   - [x] Grammar parsing from file
   - [x] Nullable symbols
   - [x] First
-  - [ ] Follow
+  - [x] Follow
   - [ ] Generators
   - [ ] Reachable symbols
   - [ ] Singular symbols
@@ -25,7 +25,10 @@ Someday the set of tools will comprehend:
 - Syntax Analysis:
   - [ ] Creation of PDA from Grammar
   - [ ] Creation of DPDA from Grammar
-  - [ ] Top-Down parser LL(1)
+  - [ ] Parse Tree
+    - [x] Concrete
+    - [ ] Abstract
+  - [x] Top-Down parser LL(1)
   - [ ] Bottom-Up parsers:
     - [ ] LR(0)
     - [ ] SLR(1)
