@@ -9,16 +9,16 @@ import (
 )
 
 func main() {
-  fmt.Println("Si comincia il top-down parsing")
   //G := Grammar.ParseGrammar("./Grammar/Grammars/LL1_prova.g")
-  G := Grammar.ParseGrammar("./Grammar/Grammars/RegExpGrammar.g")
+  //G := Grammar.ParseGrammar("./Grammar/Grammars/RegExpGrammar.g")
+  G := Grammar.ParseGrammar("./Grammar/Grammars/Prova2.g")
   fmt.Println(G)
   parser, err := Parsing.MakeParserTopDownLL1(G)
   if err != nil {
     panic(err)
   }
-  input := "(a|b)*"
-  //input := "a"
+  //input := "(a+(a*b)/(b-a))"
+  input := "aaaaaabbbb"
   tree, err := parser.Parse(input)
   if err != nil {
     panic(err)

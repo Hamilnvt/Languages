@@ -57,12 +57,15 @@ func makeRule(rule_str string) Rule {
   for i := 2; i < len(parsed_rule); i++ {
     prod := parsed_rule[i]
     if prod != "|" {
+      //TODO contiene, non per forza all'inizio
       if len(prod) > 1 && prod[:2] == "\\|" {
         if len(prod) > 2 {
           prod = "|"+prod[2:]
         } else {
           prod = "|"
         }
+      } else if prod == "\\eps" {
+        prod = EPS
       }
       //fmt.Printf("%v -> %v\n", rule.A, parsed_rule[i])
       rule.prods = append(rule.prods, prod)
@@ -105,8 +108,112 @@ func MakeGrammar(rules []string, initialSymbol string, nonterminals []NonTermina
   return G
 }
 
-//TODO se ad un certo punto è arrivato alla fine del file, ma non ha ancora parsato tutto: errore
 func ParseGrammar(grammar_path string) Grammar {
+  if grammar_path[len(grammar_path)-2:] != ".g" {
+    panic("File extension should be .g")
+  }
+
+  file, err := os.Open(grammar_path)
+  if err != nil {
+    panic(err)
+  }
+
+  fmt.Println("Scanning file:")
+  clean_file := make([]string, 0)
+  scanner := bufio.NewScanner(file)
+  for scanner.Scan() {
+    line := strings.TrimSpace(scanner.Text())
+    //fmt.Println(line)
+
+    if len(line) > 0 && (line[0] != '#'){
+      clean_file = append(clean_file, line)
+    }
+  }
+
+  if err := scanner.Err(); err != nil {
+    panic(err)
+  }
+  file.Close()
+  fmt.Println("File scanning ended without errors.\n")
+  for _, line := range clean_file {
+    fmt.Println(line)
+  }
+  fmt.Println()
+
+  fmt.Println("Parsing Definitions:")
+	//symbolTable := make(map[string][]string)
+
+  i := 0
+  line := clean_file[i]
+  if line != "DEFINE:" {
+    if line != "GRAMMAR:" {
+      panic("Invalid Definitions declaration, it should be of the form:\nDEFINE:\nDEF1 [def1]\n(You can omit it)")
+    } else {
+      fmt.Println("No Definitions declared")
+    }
+  } else {
+    fmt.Println("TODO: DEFINITIONS")
+  }
+
+  grammar := Grammar{
+    R: make(map[NonTerminal][]Prod),
+    FirstTable: make(map[NonTerminal][]Terminal),
+    FollowTable: make(map[NonTerminal][]Terminal),
+  }
+
+  fmt.Println("Parsing Grammar:")
+  line = clean_file[i]
+  if line != "GRAMMAR:" {
+    panic("Invalid Grammar declaration, it should be of the form:\nGRAMMAR:\nA -> a")
+  } else {
+    i++
+  }
+
+  for j := i; j < len(clean_file); j++ {
+    line := strings.Fields(clean_file[j])
+    if len(line) <3 {
+      panic("Invalid Rule declaration, it should have at least one right production:\nA -> a")
+    }
+    if line[1] != "->" {
+      panic("Invalid Rule declaration, it should be of the form:\nA -> b_0 | ... | b_k")
+    }
+    nonTerminal := line[0]
+    if j == 1 {
+      grammar.S = nonTerminal
+    }
+    grammar.NT = union(grammar.NT, []string{nonTerminal})
+    //fmt.Println(line)
+  }
+
+  for j := i; j < len(clean_file); j++ {
+    line := clean_file[j]
+    rule := makeRule(line)
+    grammar.R[rule.A] = union(grammar.R[rule.A], rule.prods)
+    //fmt.Println(grammar.R[rule.A])
+  }
+
+  for _, nt := range grammar.NT {
+    for _, prod := range grammar.R[nt] {
+      for _, symbol := range prod {
+        if !grammar.IsNonTerminal(string(symbol)) && string(symbol) != EPS {
+          grammar.T = union(grammar.T, []string{string(symbol)})
+        }
+      }
+    }
+  }
+
+  for _, nt := range grammar.NT {
+    grammar.FirstTable[nt] = grammar.First(nt)
+  }
+  for _, nt := range grammar.NT {
+    grammar.FollowTable[nt] = grammar.Follow(nt)
+  }
+
+  return grammar
+}
+
+//TODO se ad un certo punto è arrivato alla fine del file, ma non ha ancora parsato tutto: errore
+func ParseGrammar_deprecated(grammar_path string) Grammar {
   if grammar_path[len(grammar_path)-2:] != ".g" {
     panic("File extension should be .g")
   }

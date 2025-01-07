@@ -1,0 +1,2 @@
+GRAMMAR:
+S -> aaaSbb | \eps

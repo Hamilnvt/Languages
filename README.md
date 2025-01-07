@@ -1,8 +1,8 @@
 Work in progress
 
 # What is this?
-It's a personal project about my university studies on programming languages.\
-It has the ambition to recreate some sort of compiler compiler like yacc-lex (also, I'm learning Go, I don't know why, should've gone with Rust? Let me know).\
+It's a personal project about my university studies on programming languages. 
+It has the ambition to recreate some sort of compiler compiler like yacc-lex (also, I'm learning Go, I don't know why, should've gone with Rust? Let me know). 
 Someday the set of tools will comprehend:
 - Lexical Analysis:
   -  [x] Creation of NFA from regular expressions
@@ -10,6 +10,7 @@ Someday the set of tools will comprehend:
   -  [ ] Lexical Analyzer
 - Grammars:
   - [x] Grammar parsing from file
+    - [ ] command-line
   - [x] Nullable symbols
   - [x] First
   - [x] Follow
@@ -38,52 +39,51 @@ Someday the set of tools will comprehend:
 # Parsing Grammar from file
 
 You can parse a grammar by invoking the function Grammar.ParseGrammar("/path/to/grammar.g").
-This function returns a Grammar (see below, or above?)
+
+This function returns a Grammar (see below).
+
+TODO: someday there will be a command-line for this
 
 Any file .g should follow this syntax:
 
 ```
-# This is a comment and can be placed only at the beginning of a line (for the moment)
-# Blank lines will be ignored
+# This is a comment and can only be placed at the beginning of a line
 
-S: initial_symbol
+# Blank lines and comments will be ignored.
+```
 
-# List of Terminals
-T: {
-  a_00 ... a_0k
-  a_10 ...
-  .
-  .
-  .
-  a_i0 ... a_ik
-}
+## Definitions of Terminals definitions which you can use later in the Grammar declaration.
 
-# white spaces are the separators, so you can use every character you want
-# except for '}' and '#' which you'll need to escape like this \} and \#
+_Syntax for this is work in progress..._
+```
+DEFINE:
 
-# List of NonTerminals
-NT: {
-  A_00 ... A_0k
-  A_10 ...
-  .
-  .
-  .
-  A_i0 ... A_ik
-}
+DEF1 (def1)
+...
 
-# List of Rules (Spaces between right productions are important!)
-R: {
+```
+
+## List of Rules of the Grammar.
+
+White spaces separate the terms, while '|' separate the productions, so you can use every character you want except for ' ' and '|', which you'll need to escape.
+
+    > Please, I beg you, don't use '#' as a NonTerminal, it'll be recognized as a comment, I didn't bother myself implementing the escaping
+
+```
+GRAMMAR:
+
   A_0 -> b_00 | ... | b_0k
   A_1 -> ...
   .
   .
   .
   A_i -> b_i0 | ... | b_ik
-}
 
-# If you want to use the character | in the rules you'll have to escape it like this \|
 ```
+
 Anything other than that will throw a panic error at your face.
+
+--------------
 
 A Grammar is a type:
 ```go
@@ -91,6 +91,6 @@ type Grammar struct {
   S  string              // initial symbol
   NT []string            // non terminals
   T  []string            // terminals
-  R  map[string][]string // rules (A -> a0 | ... | ak is stored as Grammar.R[A] = [a0 ... ak])
+  R  map[string][]string // rules (A -> a_0 | ... | a_k is stored as Grammar.R[A] = [a_0 ... a_k])
 }
 ```

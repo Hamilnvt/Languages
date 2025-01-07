@@ -1,18 +1,9 @@
-S: S
+DEFINE:
 
-T: {
-  a
-  b
-}
+C = [a | ... | z]
 
-NT: {
-  S
-  A
-  B
-}
+GRAMMAR:
 
-R: {
-  S -> AB
-  A -> a | b
-  B -> b
-}
+S -> AB
+A -> a | b
+B -> b

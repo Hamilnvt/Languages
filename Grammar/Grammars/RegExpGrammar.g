@@ -1,21 +1,12 @@
-S: S
+DEF:
 
-T: {
- a b c d e f g h i j k l m n o p q r s t u v w x y z ( )
- | *
-}
+GRAMMAR:
 
-NT: {
-  S R P A Q B T C
-}
-
-R: {
-  S -> ε | R
-  R -> AP
-  P -> \|AP | ε
-  A -> BQ
-  Q -> B | ε
-  B -> CT
-  T -> *T | ε
-  C -> a | b | c | d | e | f | g | h | i | j | k | l | m | n | o | p | q | r | s | t | u | v | w | x | y | z | (R)
-}
+S -> \eps | R
+R -> AP
+P -> \|AP | \eps
+A -> BQ
+Q -> B | \eps
+B -> CT
+T -> *T | \eps
+C -> a | b | c | d | e | f | g | h | i | j | k | l | m | n | o | p | q | r | s | t | u | v | w | x | y | z | (R)

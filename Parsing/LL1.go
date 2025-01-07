@@ -59,6 +59,7 @@ func MakeParserTopDownLL1(grammar Grammar.Grammar) (LL1, error) {
     table: make(ParsingTable),
   }
 
+  //TODO, forse potrei controllare prima se è LL(1) con le intersezioni dei first
   for _, nt := range grammar.NT {
     for _, prod := range grammar.R[nt] {
       first := grammar.First(prod)

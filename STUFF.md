@@ -65,3 +65,8 @@
 # Cos'ho capito
 
 - Nel lexical analizer (LA), ogni stato finale del DFA corrisponde ad un token (la cui descrizione viene data in fase di dichiarazione con un'espressione regolare), e quando il DFA, leggendo una stringa, termina su quello stato finale, restituisce il token e la stringa letta
+- Come procedere:
+  - Si danno le definizioni regolari per i terminali
+  - si crea il DFA che fungerà da LA che ritorna i token
+  - Si definiscono le regole con terminali e non terminali
+  - nel Parsing quando si ritorna un terminal gli si associa il token riconosciuto (e il valore che devo capire a che punto assegnarlo)
