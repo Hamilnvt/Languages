@@ -38,14 +38,12 @@ Someday the set of tools will comprehend:
 
 # Parsing Grammar from file
 
-You can parse a grammar by invoking the function Grammar.ParseGrammar("/path/to/grammar.g").
-
+You can parse a grammar by invoking the function Grammar.ParseGrammar("/path/to/grammar.g").  
 This function returns a Grammar (see below).
 
 TODO: someday there will be a command-line for this
 
-Any file .g should follow this syntax:
-
+Any file .g should follow this syntax:  
 ```
 # This is a comment and can only be placed at the beginning of a line
 
@@ -54,20 +52,19 @@ Any file .g should follow this syntax:
 
 ## Definitions of Terminals definitions which you can use later in the Grammar declaration.
 
-_Syntax for this is work in progress..._
+_Syntax for this is work in progress..._ 
 ```
 DEFINE:
 
 DEF1 (def1)
 ...
-
 ```
 
 ## List of Rules of the Grammar.
 
 White spaces separate the terms, while '|' separate the productions, so you can use every character you want except for ' ' and '|', which you'll need to escape.
 
-    > Please, I beg you, don't use '#' as a NonTerminal, it'll be recognized as a comment, I didn't bother myself implementing the escaping
+> Please, I beg you, don't use '#' as a NonTerminal, it'll be recognized as a comment, I didn't bother myself implementing the escaping
 
 ```
 GRAMMAR:
