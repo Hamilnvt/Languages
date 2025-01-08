@@ -1,9 +1,9 @@
 DEFINE:
 
-C = [a | ... | z]
+C "[a-z]"
 
 GRAMMAR:
 
-S -> AB
+S -> A B
 A -> a | b
-B -> b
+B -> b | C

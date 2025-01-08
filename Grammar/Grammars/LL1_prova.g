@@ -1,10 +1,10 @@
 GRAMMAR:
                             
-E -> TF                            
-F -> \eps | +E | -E
-T -> AD
-D -> \eps | *T | /T
-A -> a | b | (E) | [E] | {E}
+E -> T F                            
+F -> \eps | + E | - E
+T -> A D
+D -> \eps | * T | / T
+A -> a | b | ( E ) | [ E ] | { E }
                             
                             
                             

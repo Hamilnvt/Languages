@@ -14,7 +14,7 @@ type TablePair struct {
   a Grammar.Terminal
 }
 
-type ParsingTable map[TablePair]string
+type ParsingTable map[TablePair][]string
 
 const EPS = Grammar.EPS
 
@@ -60,26 +60,33 @@ func MakeParserTopDownLL1(grammar Grammar.Grammar) (LL1, error) {
   }
 
   //TODO, forse potrei controllare prima se è LL(1) con le intersezioni dei first
+  //TODO ricontrollare, forse non funziona. E infatti non tiene conto degli spazi e senza definizioni non legge ad esempio "if"
   for _, nt := range grammar.NT {
     for _, prod := range grammar.R[nt] {
       first := grammar.First(prod)
-      //fmt.Printf("First(%v) = %v\n", prod, first)
-      for _, symbol := range first {
-        if symbol == EPS {
+      fmt.Printf("First(%v) = %v\n", prod, first)
+      for _, term := range first {
+        if term == EPS {
           follow := grammar.FollowTable[nt] 
-          for _, f_symbol := range follow {
-            pair := TablePair{A:nt, a:f_symbol}
-            if _, ok := parser.table[pair]; !ok {
+          for _, f_term := range follow {
+            pair := TablePair{A:nt, a:f_term}
+            // TODO ha senso questa condizione?
+            if val, ok := parser.table[pair]; !ok || len(val) == 0 {
               parser.table[pair] = prod 
             } else {
+              fmt.Printf("ERROR:\npair: %v\nval: %v\nprod: %v\n", pair, val, prod)
+              parser.PrintTable()
               return LL1{}, errors.New("Grammar is not LL(1) :(")
             } 
           }          
         } else {
-          pair := TablePair{A:nt, a:symbol}
-          if _, ok := parser.table[pair]; !ok {
+          pair := TablePair{A:nt, a:term}
+          // TODO ha senso questa condizione?
+          if val, ok := parser.table[pair]; !ok || len(val) == 0 {
             parser.table[pair] = prod 
           } else {
+            fmt.Printf("ERROR:\npair: %v\nval: %v\nprod: %v\n", pair, val, prod)
+            parser.PrintTable()
             return LL1{}, errors.New("Grammar is not LL(1) :(")
           } 
         }
@@ -122,7 +129,7 @@ func (parser LL1) Parse(input string) (DerivationTree, error) {
       //fmt.Fprintf(w, "|  ParsingTable[%v, %v] = %v\t", X, parser.input[ic], prod)
       if ok {
         parser.stack.Pop()
-        if prod != EPS {
+        if len(prod) != 0 && prod[0] != EPS && prod[0] != "" {
           for j := len(prod)-1; j >= 0; j-- {
             parser.stack.Push(string(prod[j]))
           }

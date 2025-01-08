@@ -1,8 +1,8 @@
 GRAMMAR:
 
-S -> | BCA | ABE
-A -> a | aDb | bSc
-B -> C | Bb
-C -> \eps | dC
-D -> dD
-E -> D | dE
+S -> B C A | A B E
+A -> a | a D b | b S c
+B -> C | B b
+C -> \eps | d C
+D -> d D
+E -> D | d E

@@ -14,20 +14,20 @@ const (
 
 type Terminal = string
 type NonTerminal = string
-type Prod = string
+type Production = []string
 
 type Grammar struct {
   S string
   NT []NonTerminal
   T []Terminal
-  R map[NonTerminal][]Prod
+  R map[NonTerminal][]Production
   FirstTable map[NonTerminal][]Terminal
   FollowTable map[NonTerminal][]Terminal
 }
 
 type Rule struct {
   A NonTerminal
-  prods []Prod
+  prods []Production
 }
 
 func (rule Rule) String() (res string) {
@@ -42,34 +42,36 @@ func (rule Rule) String() (res string) {
   return
 }
 
+//TODO non fa l'unione, ma solo l'append (se ci sono due regole per lo stesso nonterminale fa casino)
 func makeRule(rule_str string) Rule {
   fmt.Println("Creating rule from:", rule_str)
-  rule := Rule{} 
+  rule := Rule{
+    prods: make([]Production, 0),
+  } 
   parsed_rule := strings.Fields(rule_str)
-  //fmt.Printf("%q\n", parsed_rule)
+  fmt.Printf("Parsed rule: %q\n", parsed_rule)
   if len(parsed_rule) < 3 {
     panic("Rule should have at least one prod (e.g. A -> a)")
   }
   rule.A = parsed_rule[0]
   if parsed_rule[1] != "->" {
-    panic(fmt.Sprintf("ERROR: Malformed rule. Should be of the form: A -> a | ... | z"))
+    panic(fmt.Sprintf("ERROR: Invalid rule. Should be of the form: A -> a | ... | z"))
   }
-  for i := 2; i < len(parsed_rule); i++ {
-    prod := parsed_rule[i]
-    if prod != "|" {
-      //TODO contiene, non per forza all'inizio
-      if len(prod) > 1 && prod[:2] == "\\|" {
-        if len(prod) > 2 {
-          prod = "|"+prod[2:]
-        } else {
-          prod = "|"
-        }
-      } else if prod == "\\eps" {
-        prod = EPS
+  //TODO devo prevedere l'escapin di |
+  parsed_rule = strings.Split(strings.Join(parsed_rule[2:], " "), " | ")
+  fmt.Printf("Ready to check rule: %q\n", parsed_rule)
+  for i := 0; i < len(parsed_rule); i++ {
+    prod := strings.Fields(parsed_rule[i])
+    for i, term := range prod {
+      switch term {
+      case "\\eps":
+        prod[i] = EPS
+      case "\\|":
+        prod[i] = "|"
       }
-      //fmt.Printf("%v -> %v\n", rule.A, parsed_rule[i])
-      rule.prods = append(rule.prods, prod)
     }
+    fmt.Printf("%v -> %v\n", rule.A, prod)
+    rule.prods = append(rule.prods, prod)
   }
   return rule
 }
@@ -93,12 +95,12 @@ func MakeGrammar(rules []string, initialSymbol string, nonterminals []NonTermina
   for _, rule := range rules {
     parsed_rules = append(parsed_rules, makeRule(rule))
   }
-  R := make(map[NonTerminal][]Prod)
+  R := make(map[NonTerminal][]Production)
   G := Grammar{
     S: parsed_rules[0].A,
     NT: nonterminals,
     T: terminals,
-    R: make(map[NonTerminal][]Prod),
+    R: make(map[NonTerminal][]Production),
   }
   for _, rule := range parsed_rules {
     fmt.Println(rule)
@@ -141,7 +143,7 @@ func ParseGrammar(grammar_path string) Grammar {
   fmt.Println()
 
   fmt.Println("Parsing Definitions:")
-	//symbolTable := make(map[string][]string)
+	symbolTable := make(map[string]string)
 
   i := 0
   line := clean_file[i]
@@ -152,11 +154,68 @@ func ParseGrammar(grammar_path string) Grammar {
       fmt.Println("No Definitions declared")
     }
   } else {
-    fmt.Println("TODO: DEFINITIONS")
+    i++
+    line = clean_file[i]
+    for i < len(clean_file) && line != "GRAMMAR:" {
+      definition := strings.SplitN(line, " ", 2)
+      fmt.Println(definition)
+      if len(definition) != 2 {
+        panic("Invalid definition, it should be of the form:\nname \"def\"\nor:\nname: (\"def\" other_name ...)")
+      }
+      name := definition[0]
+      if _, ok := symbolTable[name]; ok {
+        panic(fmt.Sprintf("%v has already been declared\n", name))
+      }
+      body := definition[1]
+      if body[0] == '"' {
+        if !(body[0] == '"' && body[len(body)-1] == '"') {
+          panic("Invalid definition, it should be of the form:\nname \"def\"")
+        }
+        symbolTable[name] = body[1:len(body)-1]
+      } else if body[0] == '(' {
+        fmt.Println("body of compound definition:", body)
+        if !(body[0] == '(' && body[len(body)-1] == ')') {
+          panic("Invalid definition, it should be of the form:\nname (\"def\" \"def\" ...)")
+        }
+        //TODO non si può usare Fields perché altrimenti non si possono mettere gli spazi nelle virgolette
+        //TODO trovare un modo per parsare " senza fare casini (basta l'escape ma poi i vari join e replace fanno casino)
+        splitted_body := strings.Fields(body[1:len(body)-1])
+        fmt.Printf("splitted body: %q\n", splitted_body)
+        for i, term := range splitted_body {
+          fmt.Println("term:", term)
+          //TODO ricontrolla questa condizione
+          if term[0] == '"' {
+            if !(term[0] == '"' && term[len(term)-1] == '"') {
+              panic("Invalid definition, it should be of the form:\nname (\"def\" other_name ...)")
+            }
+            //TODO
+          } else {
+            if _, ok := symbolTable[term]; !ok {
+              panic(fmt.Sprintf("Undeclared %v.\n", term))
+            }
+            splitted_body[i] = "\""+symbolTable[term]+"\""
+          }
+        }
+        for i, term := range splitted_body {
+          if i == len(splitted_body)-1 {
+            splitted_body[i] = term[1:len(term)-1]
+          } else {
+            splitted_body[i] = term[1:]
+          }
+        }
+        stringed_body := strings.Join(splitted_body, "")
+        symbolTable[name] = strings.ReplaceAll(stringed_body, "\"", " ")
+        fmt.Println("Final definition:", symbolTable[name])
+      } else {
+        panic("Invalid definition, it should be of the form:\nname \"def\"\nor:\nname: (\"def\" other_name ...)")
+      }
+      i++
+      line = clean_file[i]
+    }
   }
 
   grammar := Grammar{
-    R: make(map[NonTerminal][]Prod),
+    R: make(map[NonTerminal][]Production),
     FirstTable: make(map[NonTerminal][]Terminal),
     FollowTable: make(map[NonTerminal][]Terminal),
   }
@@ -178,32 +237,34 @@ func ParseGrammar(grammar_path string) Grammar {
       panic("Invalid Rule declaration, it should be of the form:\nA -> b_0 | ... | b_k")
     }
     nonTerminal := line[0]
-    if j == 1 {
+    if j == i {
       grammar.S = nonTerminal
     }
     grammar.NT = union(grammar.NT, []string{nonTerminal})
-    //fmt.Println(line)
+    fmt.Println(line)
   }
+  fmt.Println("Non terminals:", grammar.NT)
 
   for j := i; j < len(clean_file); j++ {
     line := clean_file[j]
     rule := makeRule(line)
-    grammar.R[rule.A] = union(grammar.R[rule.A], rule.prods)
-    //fmt.Println(grammar.R[rule.A])
+    grammar.R[rule.A] = append(grammar.R[rule.A], rule.prods...)
+    fmt.Printf("%v -> %v\n", rule.A, grammar.R[rule.A])
   }
 
   for _, nt := range grammar.NT {
     for _, prod := range grammar.R[nt] {
-      for _, symbol := range prod {
-        if !grammar.IsNonTerminal(string(symbol)) && string(symbol) != EPS {
-          grammar.T = union(grammar.T, []string{string(symbol)})
+      for _, term := range prod {
+        if !grammar.IsNonTerminal(term) && term != EPS {
+          grammar.T = union(grammar.T, []string{term})
         }
       }
     }
   }
+  fmt.Println("Terminals:", grammar.T)
 
   for _, nt := range grammar.NT {
-    grammar.FirstTable[nt] = grammar.First(nt)
+    grammar.FirstTable[nt] = grammar.First([]string{nt})
   }
   for _, nt := range grammar.NT {
     grammar.FollowTable[nt] = grammar.Follow(nt)
@@ -242,7 +303,7 @@ func ParseGrammar_deprecated(grammar_path string) Grammar {
   fmt.Println("\nScanning file ended without errors:\n")
 
   grammar := Grammar{
-    R: make(map[NonTerminal][]Prod),
+    R: make(map[NonTerminal][]Production),
     FirstTable: make(map[NonTerminal][]Terminal),
     FollowTable: make(map[NonTerminal][]Terminal),
   }
@@ -348,7 +409,7 @@ func ParseGrammar_deprecated(grammar_path string) Grammar {
     }
     for _, prod := range grammar.R[nt] {
       for _, t := range grammar.T {
-        if used := usedTerminals[t]; !used && strings.Contains(prod, t) {
+        if used := usedTerminals[t]; !used && isStringIn(t, prod) { //TODO
           //fmt.Println(t, "is used")
           usedTerminals[t] = true
         }
@@ -374,7 +435,7 @@ func ParseGrammar_deprecated(grammar_path string) Grammar {
   fmt.Println("Grammar parsed successfully")
 
   for _, nt := range grammar.NT {
-    grammar.FirstTable[nt] = grammar.First(nt)
+    grammar.FirstTable[nt] = grammar.First([]string{nt})
   }
   for _, nt := range grammar.NT {
     grammar.FollowTable[nt] = grammar.Follow(nt)
@@ -386,7 +447,7 @@ func ParseGrammar_deprecated(grammar_path string) Grammar {
 func (G Grammar) addRule(rule Rule) {
   fmt.Println(rule)
   if G.R == nil {
-    G.R = make(map[NonTerminal][]Prod)
+    G.R = make(map[NonTerminal][]Production)
   }
   if isStringIn(rule.A, G.NT) {
     missing := false
@@ -404,7 +465,8 @@ func (G Grammar) addRule(rule Rule) {
       }
     }
     if !missing {
-      G.R[rule.A] = union(G.R[rule.A], rule.prods)
+      //TODO
+      //G.R[rule.A] = union(G.R[rule.A], rule.prods)
     } else {
       panic(fmt.Sprintf("%v is not a symbol of the grammar (Terminals %v, NonTerminals %v)\n", missing_symbol, G.T, G.NT))
     }
@@ -447,7 +509,8 @@ func (G Grammar) NullableSymbols() []NonTerminal {
   nullSyms := make([]NonTerminal, 0)
   for _, nt := range G.NT {
     for _, prod := range G.R[nt] {
-      if strings.Compare(EPS, prod) == 0 {
+      //TODO
+      if len(prod) == 1 && prod[0] == EPS {
         nullSyms = append(nullSyms, nt)
       }
     } 
@@ -480,22 +543,57 @@ func (G Grammar) NullableSymbols() []NonTerminal {
   return nullSyms
 }
 
-func union(slice1, slice2 []string) []string {
-  // Create a map to store the elements of the union
-  values := make(map[string]bool)
-  for _, key := range slice1 { // for loop used in slice1 to remove duplicates from the values
+//func union(slice1 []string, slices ...[]string) []string {
+//  // Create a map to store the elements of the union
+//  values := make(map[string]bool)
+//  for _, key := range slice1 { // for loop used in slice1 to remove duplicates from the values
+//    values[key] = true
+//  }
+//  for _, slice := range slices {
+//    for _, key := range slice { // for loop used in slice2 to remove duplicates from the values
+//      values[key] = true
+//    }
+//  }
+//  // Convert the map keys to a slice
+//  output := make([]string, 0, len(values)) //create slice output
+//  for val := range values {
+//    output = append(output, val) //append values in slice output
+//  }
+//  return output
+//}
+func union[S comparable](setA, setB []S) []S {
+  //fmt.Printf("Union:\n%q\n%q\n", setA, setB)
+  values := make(map[S]bool)
+  for _, key := range setA {
     values[key] = true
   }
-  for _, key := range slice2 { // for loop used in slice2 to remove duplicates from the values
+  for _, key := range setB {
     values[key] = true
   }
-  // Convert the map keys to a slice
-  output := make([]string, 0, len(values)) //create slice output
+  output := make([]S, len(values))
+  i := 0
   for val := range values {
-    output = append(output, val) //append values in slice output
+    output[i] = val
+    i++
   }
   return output
 }
+//func union(setA [][]string, sets ...[]string) [][]string {
+//  values := make(map[string]bool)
+//  for _, key := range slice1 {
+//    values[key] = true
+//  }
+//  for _, slice := range slices {
+//    for _, key := range slice {
+//      values[key] = true
+//    }
+//  }
+//  output := make([][]string, 0, len(values))
+//  for val := range values {
+//    output = append(output, val)
+//  }
+//  return output
+//}
 func intersection(slice1, slice2 []string) []string {
   values := make(map[string]bool)
   for _, key := range slice1 {
@@ -512,39 +610,43 @@ func intersection(slice1, slice2 []string) []string {
 
 //TODO 
 // - si potrebbe fare che se calcola il first di un nonterminale lo inserisce nella mappa e se lo deve ricacolare, prima di farlo controlla la tabella
-func (G Grammar) first_interface(f string, first []string, nullSyms []string) []string {
-  //fmt.Println("Calculating first of", f)
-  if f == EPS || f == "" {
+// - ora prende un []string come f
+func (G Grammar) first(f []string, first []string, nullSyms []string) []string {
+  fmt.Println("Calculating first of", f)
+  if len(f) == 0 || (len(f) == 1 && (f[0] == EPS || f[0] == "")) {
     return append(first, EPS)
   }
-  first_symbol := string(f[0])
-  if isStringIn(first_symbol, G.T) {
-    return append(first, first_symbol)
+  first_term := string(f[0])
+  if isStringIn(first_term, G.T) {
+    return append(first, first_term)
   }
-  if !isStringIn(first_symbol, nullSyms) {
-    //fmt.Println(first_symbol, "is not nullable")
-    for _, prod := range G.R[first_symbol] {
-      if string(prod[0]) != first_symbol {
-        first = G.first_interface(prod, first, nullSyms)
+  if !isStringIn(first_term, nullSyms) {
+    fmt.Println(first_term, "is not nullable")
+    for _, prod := range G.R[first_term] {
+      if prod[0] != first_term {
+        //TODO
+        first = G.first(prod, first, nullSyms)
       }
     }
   } else {
-    //fmt.Println(first_symbol, "is nullable")
+    fmt.Println(first_term, "is nullable")
     first_X := make([]string, 0)
-    for _, prod := range G.R[first_symbol] {
-      if string(prod[0]) != first_symbol {
-        first_X = G.first_interface(prod, first_X, nullSyms)
+    for _, prod := range G.R[first_term] {
+      if prod[0] != first_term {
+        //TODO
+        first_X = G.first(prod, first_X, nullSyms)
       } else if len(prod) > 1 {
-        first_X = G.first_interface(prod[1:], first_X, nullSyms)
+        //TODO
+        first_X = G.first(prod[1:], first_X, nullSyms)
       }
     }
-    //fmt.Println(first_X)
+    fmt.Println(first_X)
 
     found := false
     first_X_wo_eps := make([]string, 0)
-    for _, f := range first_X {
-      if f != EPS {
-        first_X_wo_eps = append(first_X_wo_eps, f)
+    for _, fi := range first_X {
+      if fi != EPS {
+        first_X_wo_eps = append(first_X_wo_eps, fi)
       } else {
         found = true
       }
@@ -552,15 +654,17 @@ func (G Grammar) first_interface(f string, first []string, nullSyms []string) []
 
     first_X = first_X_wo_eps
     if found {
-      //fmt.Println("without EPS:", first_X)
+      fmt.Println("without EPS:", first_X)
     }
     if len(first_X) > 0 {
       first = union(first, first_X)
     }
     if len(f) > 1 {
-      if string(f[1]) != first_symbol {
-        first = union(first, G.First(f[1:]))
-      }
+      //TODO perché f[1] != first? questo non capisco, forse di f[0] ? ma no, boooh
+      fmt.Println("Ci stiamo ancora lavorando")
+      //if f[1] != first {
+      //  first = union(first, G.First(f[1:]))
+      //}
     } else {
       first = append(first, EPS)
     }
@@ -568,30 +672,30 @@ func (G Grammar) first_interface(f string, first []string, nullSyms []string) []
   return first
 }
 
-func (G Grammar) First(f string) []string {
-  //TODO sfruttando le mappe (come in union) è molto più facile
-  first := G.first_interface(f, make([]string, 0), G.NullableSymbols())
-  i := 0
-  for i < len(first)-1 {
-    j := i+1
-    removed := false
-    for j < len(first) {
-      if first[i] == first[j] {
-        removed = true
-        first[j] = first[len(first)-1]
-        first = first[:len(first)-1]
-      } else {
-        j++
-      }
-    }
-    if !removed {
-      i++
-    }
-  }
-  return first
+func (G Grammar) First(f []string) []string {
+  first := G.first(f, make([]string, 0), G.NullableSymbols())
+  //fmt.Println("First con simboli ripetuti:", first)
+  //i := 0
+  //for i < len(first)-1 {
+  //  j := i+1
+  //  removed := false
+  //  for j < len(first) {
+  //    if first[i] == first[j] {
+  //      removed = true
+  //      first[j] = first[len(first)-1]
+  //      first = first[:len(first)-1]
+  //    } else {
+  //      j++
+  //    }
+  //  }
+  //  if !removed {
+  //    i++
+  //  }
+  //}
+  return union(first, first)
 }
 
-func (G Grammar) follow_interface(Y NonTerminal, from []string) []string {
+func (G Grammar) follow(Y NonTerminal, from []string) []string {
   if isStringIn(Y, from) {
     return []string{}
   }
@@ -599,22 +703,23 @@ func (G Grammar) follow_interface(Y NonTerminal, from []string) []string {
   if Y == G.S {
     follow = append(follow , "$")
   }
-  //fmt.Printf("Calculating Follow(%v)\n", Y)
+  fmt.Printf("Calculating Follow(%v)\n", Y)
   for _, X := range G.NT {
     for _, prod := range G.R[X] {
       for i := range prod {
-        symbol := string(prod[i])
-        if symbol == Y {
-          //fmt.Printf("%v in pos %v\n", prod, i)
-          beta := ""
+        term := prod[i]
+        if term == Y {
+          fmt.Printf("%v in pos %v\n", prod, i)
+          beta := make([]string, 0)
           if i != len(prod)-1 {
+            //TODO
             beta = prod[i+1:]
           } 
           first := G.First(beta)
-          //fmt.Printf("First(%v) = %v\n", beta, first)
+          fmt.Printf("First(%v) = %v\n", beta, first)
 
           if isStringIn(EPS, first) {
-            follow = union(follow, G.follow_interface(X, append(from, Y)))
+            follow = union(follow, G.follow(X, append(from, Y)))
           }
           first_wo_eps := make([]string, 0)
           for _, f := range first {
@@ -622,7 +727,7 @@ func (G Grammar) follow_interface(Y NonTerminal, from []string) []string {
               first_wo_eps = append(first_wo_eps, f)
             }
           }
-          //fmt.Printf("First(%v) \\ {%v} = %v\n", beta, EPS, first_wo_eps)
+          fmt.Printf("First(%v) \\ {%v} = %v\n", beta, EPS, first_wo_eps)
           follow = union(follow, first_wo_eps)
         }
       }
@@ -632,7 +737,7 @@ func (G Grammar) follow_interface(Y NonTerminal, from []string) []string {
 }
 
 func (G Grammar) Follow(A NonTerminal) []string {
-  return G.follow_interface(A, make([]string, 0))
+  return G.follow(A, make([]string, 0))
 }
 
 func (G Grammar) IsTerminal(X string) bool {

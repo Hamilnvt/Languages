@@ -45,12 +45,12 @@
     > si potrebbe fare che se calcola il first di un nonterminale lo inserisce nella mappa e se lo deve ricacolare, prima di farlo controlla la tabella
 [o] Parsing grammar from file
 - [x] fare in modo che accetti solo file con estensione .g (for the meme)
-- [ ] commenti anche a metà riga (mettere # nei simboli slashati e migliorare il parser)
-- [ ] \eps = ε
+nah - [ ] commenti anche a metà riga (mettere # nei simboli slashati e migliorare il parser)
+- [x] \eps = ε
 - [x] | deve essere escaped
 - [ ] definizioni all'inizio del file (tipo alias) ? 
 - [ ] se C = a | ... | z , posso scrivere questa notazione e lo capisce
-- [ ] togliere S, T e NT e dare delle regole precise per parsare (S è il NonTerminale della prima regola, gli altri NonTerminali si prendono dalle regole successive e tutti gli altri simboli sono terminali)
+- [x] togliere S, T e NT e dare delle regole precise per parsare (S è il NonTerminale della prima regola, gli altri NonTerminali si prendono dalle regole successive e tutti gli altri simboli sono terminali)
 - [ ] spazio per le definizioni regolari (i pattern dei token)
 
 ## Parsing

@@ -56,7 +56,8 @@ _Syntax for this is work in progress..._
 ```
 DEFINE:
 
-DEF1 (def1)
+DEF1 "def1"
+DEF2 ("def2" DEF1)
 ...
 ```
 

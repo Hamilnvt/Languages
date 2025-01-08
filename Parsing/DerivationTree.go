@@ -34,21 +34,8 @@ func (tree DerivationTree) isLeaf() bool {
   return len(tree.children) == 0 && tree.grammar.IsTerminal(tree.val)
 }
 
-func (tree DerivationTree) getLeaves(leaves []string) []string {
-  if len(tree.children) == 0 {
-    return append(leaves, tree.val)
-  } else {
-    for _, child := range tree.children {
-      for _, leaf := range child.getLeaves(make([]string, 0)) {
-        leaves = append(leaves, leaf)
-      }
-    }
-    return leaves
-  }
-}
-
 func (tree DerivationTree) GetParsedString() string {
-  return strings.Join(tree.getParsedString(make([]string, 0)), "")
+  return strings.Join(tree.getParsedString(make([]string, 0)), " ")
 }
 
 func (tree DerivationTree) getParsedString(s []string) []string {
@@ -96,10 +83,10 @@ func (tree *DerivationTree) findLeftMostNonTerminal() *DerivationTree {
   return nil
 }
 
-func (root  *DerivationTree) addChildren(prod string) {
+func (root  *DerivationTree) addChildren(prod []string) {
   tree := root.findLeftMostNonTerminal()
-  for _, symbol := range prod {
-    child := newDerivationTree(tree.grammar, string(symbol))
+  for _, term := range prod {
+    child := newDerivationTree(tree.grammar, term)
     child.parent = root
     tree.children = append(tree.children, child)
   }  

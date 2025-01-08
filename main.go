@@ -8,17 +8,23 @@ import (
   "Languages/Parsing"
 )
 
+//TODO qua si comincia a fare sul serio, devo fare in modo che Terminali e NonTerminali possano avere lunghezza > 1, quindi la prod sarà []string
 func main() {
+  ParsingAndLL1()
+}
+
+func ParsingAndLL1() {
   //G := Grammar.ParseGrammar("./Grammar/Grammars/LL1_prova.g")
   //G := Grammar.ParseGrammar("./Grammar/Grammars/RegExpGrammar.g")
-  G := Grammar.ParseGrammar("./Grammar/Grammars/Prova2.g")
+  G := Grammar.ParseGrammar("./Grammar/Grammars/GrammarIfStatement.g")
   fmt.Println(G)
   parser, err := Parsing.MakeParserTopDownLL1(G)
   if err != nil {
     panic(err)
   }
   //input := "(a+(a*b)/(b-a))"
-  input := "aaaaaabbbb"
+  //input := "(b*(a|b))b*"
+  input := "if true then a else b"
   tree, err := parser.Parse(input)
   if err != nil {
     panic(err)
@@ -37,7 +43,7 @@ func grammar_first_and_follow() {
 
   fmt.Println("First:")
   for _, nt := range G.NT {
-    fmt.Println(nt,G.First(nt))
+    fmt.Println(nt,G.First([]string{nt}))
   }
 
   fmt.Println("\nFollow:")
@@ -74,6 +80,6 @@ func grammar_example() {
 
   fmt.Println("Calculanting the first of all nonterminals")
   for i := len(G.NT)-1; i >= 0; i-- {
-    fmt.Println(G.NT[i], ":", G.First(G.NT[i]))
+    fmt.Println(G.NT[i], ":", G.First([]string{G.NT[i]}))
   }
 }
