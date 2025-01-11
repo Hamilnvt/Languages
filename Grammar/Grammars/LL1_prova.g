@@ -1,9 +1,9 @@
 GRAMMAR:
                             
-E -> T F                            
-F -> \eps | + E | - E
-T -> A D
-D -> \eps | * T | / T
+E -> T E'
+E' -> \eps | + E | - E
+T -> A T'
+T' -> \eps | * T | / T
 A -> a | b | ( E ) | [ E ] | { E }
                             
                             

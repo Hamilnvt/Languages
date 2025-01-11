@@ -6,6 +6,7 @@ import (
   "math"
   "strconv"
   "testing"
+  "Languages/Grammar"
 )
 
 const (
@@ -446,10 +447,10 @@ func (N DFA) Minimize() DFA {
     } else {
       found := false
       for i, class := range statesToFuse {
-        if isIntInSlice(pair.a, class) || isIntInSlice(pair.b, class) {
-          if isIntInSlice(pair.a, class) && !isIntInSlice(pair.b, class) {
+        if isInSlice(pair.a, class) || isInSlice(pair.b, class) {
+          if isInSlice(pair.a, class) && !isInSlice(pair.b, class) {
             statesToFuse[i] = append(class, pair.b)
-          } else if !isIntInSlice(pair.a, class) && isIntInSlice(pair.b, class) {
+          } else if !isInSlice(pair.a, class) && isInSlice(pair.b, class) {
             statesToFuse[i] = append(class, pair.a)
           }
           found = true
@@ -485,7 +486,7 @@ func (N DFA) Minimize() DFA {
       }
     }
     new_state := N_min.AddState(fmt.Sprintf("q%v", N_min.n), new_state_final)
-    if isIntInSlice(N_min.InitialState, class) {
+    if isInSlice(N_min.InitialState, class) {
       if initialStateHasChanged {
         panic("NFA can't have more than one initial state")
       } else {
@@ -495,11 +496,11 @@ func (N DFA) Minimize() DFA {
     }
     //fmt.Println("New state:", new_state)
     for _, q := range N_min.States {
-      if !isIntInSlice(q.Index, class) {
+      if !isInSlice(q.Index, class) {
         for _, a := range N_min.Sigma {
           d := N_min.Delta(q.Index, string(a))
           if d == -1 {
-            if isIntInSlice(d, class) {
+            if isInSlice(d, class) {
               N_min.removeTransition(string(a), q.Index, d)
               N_min.AddTransition(string(a), q.Index, new_state.Index)
             }
@@ -514,7 +515,7 @@ func (N DFA) Minimize() DFA {
           N_min.removeTransition(string(a), q, d)
           _, ok := N_min.States[new_state.Index].adjac[string(a)]
           if !ok {
-            if isIntInSlice(d, class) {
+            if isInSlice(d, class) {
               N_min.AddTransition(string(a), new_state.Index, new_state.Index)
             } else {
               N_min.AddTransition(string(a), new_state.Index, d)
@@ -532,7 +533,7 @@ func (N DFA) Minimize() DFA {
   return N_min
 }
 
-func isIntInSlice(n int, slice []int) bool {
+func isInSlice[S comparable](n S, slice []S) bool {
   i := 0
   found := false
   for !found && i < len(slice) {
@@ -555,6 +556,117 @@ func (N NFA) String() (res string) {
     res += q.String()
   }
   return 
+}
+
+type ItemLR0 struct {
+  A Grammar.NonTerminal
+  Prod Grammar.Production
+  Dot int
+}
+
+func (item ItemLR0) String() string {
+  var prod_with_dot string
+  if len(item.Prod) == 0 {
+    prod_with_dot = "."
+  } else if item.Dot == len(item.Prod) {
+    prod_with_dot = strings.Join(item.Prod, " ")+" ."
+  } else if item.Dot == 0 {
+    prod_with_dot = strings.Join(item.Prod[:item.Dot], " ")+". "+strings.Join(item.Prod[item.Dot:], " ")
+  } else {
+    prod_with_dot = strings.Join(item.Prod[:item.Dot], " ")+" . "+strings.Join(item.Prod[item.Dot:], " ")
+  }
+  return fmt.Sprintf("[%v -> %v]", item.A, prod_with_dot)
+}
+
+type CA_State []ItemLR0
+func (Items CA_State) String() (res string) {
+  for i, item := range Items {
+    res += fmt.Sprintf("%v. %v\n", i, item)
+  }
+  return
+}
+
+func MakeCanonicAutomatonLR0(grammar *Grammar.Grammar) DFA {
+  CA := DFA{}
+  fmt.Println(CA)
+
+  return CA
+}
+
+func (item ItemLR0) IsIn(Items CA_State) bool {
+  fmt.Printf("Is %v in\n%v\n", item, Items)
+  for _, comp_item := range Items {
+    //fmt.Printf("comparing to\n%v\n", comp_item)
+    if item.A == comp_item.A && item.Dot == comp_item.Dot {
+      same := true
+      if len(item.Prod) != len(comp_item.Prod) {
+        same = false
+      } else {
+        for i := 0; i < len(item.Prod); i++ {
+          if item.Prod[i] != comp_item.Prod[i] {
+            same = false
+          }
+        }
+      }
+      if same {
+        return true
+      }
+    }
+  }
+  return false
+}
+
+func Closure(grammar *Grammar.Grammar, Items CA_State) CA_State {
+  already_closed_non_terminal := make([]Grammar.NonTerminal, 0)
+  fmt.Printf("Taking the closure of\n[\n%v]\n", Items)
+  i := 0
+  for i < len(Items) {
+    item := Items[i]
+    if len(item.Prod) != 0 && item.Dot < len(item.Prod) {
+      if X := item.Prod[item.Dot]; grammar.IsNonTerminal(X) && !isInSlice(X, already_closed_non_terminal) {
+        fmt.Println("closure", i, ": cosidering item", item)
+        for _, X_prod := range grammar.R[X] {
+          new_prod := X_prod
+          if len(X_prod) == 1 && X_prod[0] == EPS {
+            new_prod = make(Grammar.Production, 0)
+          }
+          new_item := ItemLR0{
+            A: X,
+            Prod: new_prod,
+            Dot: 0,
+          }
+          if !new_item.IsIn(Items) {
+            fmt.Println(new_item, "non c'è, lo aggiungo")
+            Items = append(Items, new_item)
+          } else {
+            fmt.Println(new_item, "c'è già")
+          }
+        }
+        already_closed_non_terminal = append(already_closed_non_terminal, X)
+      }
+    }
+    i++
+  } 
+  return Items
+}
+
+func Goto(grammar *Grammar.Grammar, Items CA_State, X Grammar.NonTerminal) CA_State {
+  fmt.Println("Goto with", X)
+  J := make(CA_State, 0)
+  for _, item := range Items {
+    fmt.Printf("goto: Considering item\n%v\n", item)
+    if item.Dot < len(item.Prod) && item.Prod[item.Dot] == X {
+      new_item := ItemLR0{
+        A: item.A,
+        Prod: item.Prod,
+        Dot: item.Dot+1,
+      }
+      fmt.Printf("New item:\n%v\n", new_item)
+      J = append(J, new_item)
+    }
+  }
+  fmt.Println("Goto without closure:", J)
+  return Closure(grammar, J)
 }
 
 // TESTS

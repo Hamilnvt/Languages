@@ -6,19 +6,30 @@ import (
   "Languages/Grammar"
 )
 
-type DerivationTree struct {
+type Token[S any] struct {
+  pattern string
+  name string
+  val S
+}
+
+type ParseTree struct {
   grammar Grammar.Grammar
   val string
-  children []*DerivationTree
-  parent *DerivationTree
+  children []*ParseTree
+  parent *ParseTree
+}
+
+type AbstractParseTree struct {
+  ParseTree
+  val Token[any]
 }
 
 //TODO
-func (tree DerivationTree) String() string {
+func (tree ParseTree) String() string {
   return tree.FormattedTree(0)
 }
 
-func (tree DerivationTree) FormattedTree(pad int) (res string) {
+func (tree ParseTree) FormattedTree(pad int) (res string) {
   begin := "- "
   if tree.parent == nil {
     begin = ""
@@ -30,15 +41,15 @@ func (tree DerivationTree) FormattedTree(pad int) (res string) {
   return 
 }
 
-func (tree DerivationTree) isLeaf() bool {
+func (tree ParseTree) isLeaf() bool {
   return len(tree.children) == 0 && tree.grammar.IsTerminal(tree.val)
 }
 
-func (tree DerivationTree) GetParsedString() string {
+func (tree ParseTree) GetParsedString() string {
   return strings.Join(tree.getParsedString(make([]string, 0)), " ")
 }
 
-func (tree DerivationTree) getParsedString(s []string) []string {
+func (tree ParseTree) getParsedString(s []string) []string {
   if tree.isLeaf() {
     return append(s, tree.val)
   } else {
@@ -49,24 +60,32 @@ func (tree DerivationTree) getParsedString(s []string) []string {
   return s
 }
 
-func makeDerivationTree(grammar Grammar.Grammar, val string) DerivationTree {
-  return DerivationTree{
+func makeParseTree(grammar Grammar.Grammar, val string) ParseTree {
+  return ParseTree{
     grammar: grammar,
     val: val,
-    children: make([]*DerivationTree, 0),
+    children: make([]*ParseTree, 0),
     parent: nil,
   }
 }
 
-func newDerivationTree(grammar Grammar.Grammar, val string) *DerivationTree {
-  tree := new(DerivationTree)
+func newParseTree(grammar Grammar.Grammar, val string) *ParseTree {
+  tree := new(ParseTree)
   tree.grammar = grammar
   tree.val = val
   tree.parent = nil
   return tree
 }
 
-func (tree *DerivationTree) findLeftMostNonTerminal() *DerivationTree {
+//TODO guarda il video
+func (tree ParseTree) Abstract() AbstractParseTree {
+  //abs := AbstractParseTree{
+  //  grammar: tree.grammar,
+  //}
+  return AbstractParseTree{}
+}
+
+func (tree *ParseTree) findLeftMostNonTerminal() *ParseTree {
   if len(tree.children) == 0 {
     if tree.grammar.IsNonTerminal(tree.val) {
       return tree
@@ -83,10 +102,10 @@ func (tree *DerivationTree) findLeftMostNonTerminal() *DerivationTree {
   return nil
 }
 
-func (root  *DerivationTree) addChildren(prod []string) {
+func (root  *ParseTree) addChildren(prod []string) {
   tree := root.findLeftMostNonTerminal()
   for _, term := range prod {
-    child := newDerivationTree(tree.grammar, term)
+    child := newParseTree(tree.grammar, term)
     child.parent = root
     tree.children = append(tree.children, child)
   }  

@@ -42,7 +42,7 @@
 ## Grammar
 [x] String
 [ ] First and Follow table in Grammar (as maps)
-    > si potrebbe fare che se calcola il first di un nonterminale lo inserisce nella mappa e se lo deve ricacolare, prima di farlo controlla la tabella
+- [ ] si potrebbe fare che se calcola il first di un nonterminale lo inserisce nella mappa e se lo deve ricacolare, prima di farlo controlla la tabella
 [o] Parsing grammar from file
 - [x] fare in modo che accetti solo file con estensione .g (for the meme)
 nah - [ ] commenti anche a metà riga (mettere # nei simboli slashati e migliorare il parser)
@@ -58,9 +58,13 @@ nah - [ ] commenti anche a metà riga (mettere # nei simboli slashati e migliora
 
 # Cose da leggere
 
-- https://www.reddit.com/r/ProgrammingLanguages/comments/15cxb1a/advice_on_building_an_lalrk_parser_generator/?rdt=62283
 - paper sul lexical analyzer
+- https://www.reddit.com/r/ProgrammingLanguages/comments/15cxb1a/advice_on_building_an_lalrk_parser_generator/?rdt=62283
 - https://www.sciencedirect.com/topics/computer-science/parse-tree#:~:text=A%20parse%20tree%20is%20a,symbol%20used%20in%20the%20derivation.
+- https://www.site.uottawa.ca/~bochmann/SEG-2106-2506/Notes/M2-3-SyntaxAnalysis/grammar-for-regular-expressions.html
+
+Video abstract syntax tree construction
+- https://www.youtube.com/watch?v=q4tdwlAU1-M
 
 # Cos'ho capito
 

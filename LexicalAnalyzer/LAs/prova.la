@@ -8,7 +8,7 @@
 #   ' ': concatenazione (anche senza spazio, ma necessario per gli identificatori)
 # - ci sarà una tranquilla symbol table
 
-DIGIT:   [0-9]a
-INTEGER: [1-9] $DIGIT *
-FLOAT:   $INTEGER . $DIGIT *
+DIGIT:   [0-9]
+INTEGER: [1-9] DIGIT *
+FLOAT:   INTEGER . DIGIT *
 

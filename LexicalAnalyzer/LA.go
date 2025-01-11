@@ -2,6 +2,7 @@ package LexicalAnalyzer
 
 import (
   "Languages/NFA"
+  "Languages/Parsing"
   "bufio"
   "strings"
   "os"
@@ -11,6 +12,7 @@ import (
 type LexicalAnalyzer struct {
   dfa NFA.DFA
   symbolTable map[string]string
+  parser Parsing.Parser_LL1
 }
 
 func MakeLexicalAnalyzer(la_path string) LexicalAnalyzer {
