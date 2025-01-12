@@ -4,6 +4,7 @@ import (
   "fmt"
   "os"
   "strings"
+  "strconv"
   "errors"
   "text/tabwriter"
   "Languages/NFA"
@@ -285,7 +286,7 @@ func (parser Parser_LR0) Parse(input string) (ParseTree, error) {
   for !accepted {
     //output := false
     current_state, err = parser.states_stack.Top()
-    fmt.Fprintf(w, "%v\t|  %v\t|  %v\t|  ", parser.states_stack, parser.terms_stack, strings.Join(parser.input, "")[ic:]) 
+    fmt.Fprintf(w, "%v\t|  %v\t|  %v\t|  ", strings.Join(stringifyStatesStack(parser.states_stack.GetStack()), " "), strings.Join(parser.terms_stack.GetStack(), " "), strings.Join(parser.input, "")[ic:]) 
     if err != nil {
       panic("Input didn't match (Empty stack)")
     }
@@ -324,7 +325,7 @@ func (parser Parser_LR0) Parse(input string) (ParseTree, error) {
           }
           popped_prod[i] = term
         }
-        popped_prod = popped_prod.Reverse()
+        popped_prod = Utils.Reverse(popped_prod)
         //fmt.Println("Popped prod:", popped_prod)
         if !prod.Equals(popped_prod) {
           panic("Input didn't match (Prods are not equal)")
@@ -343,7 +344,7 @@ func (parser Parser_LR0) Parse(input string) (ParseTree, error) {
         }
         parser.states_stack.Push(goto_state.num)
         parser.terms_stack.Push(prod_key.A)
-        fmt.Fprintf(w, "REDUCE %v\t|  Output: %v -> %v\n", cell.num, prod_key.A, strings.Join(prod, ""))
+        fmt.Fprintf(w, "REDUCE %v\t|  Output: %v -> %v\n", cell.num, prod_key.A, strings.Join(prod, " "))
 
       default:
         panic("Input  didn't match (Blank cell or something else)")
@@ -351,4 +352,12 @@ func (parser Parser_LR0) Parse(input string) (ParseTree, error) {
   }
 
   return ParseTree{}, nil
+}
+
+func stringifyStatesStack(stack []int) []string {
+  stringified_stack := make([]string, len(stack))
+  for i := 0; i < len(stack); i++ {
+    stringified_stack[i] = strconv.Itoa(stack[i])
+  }
+  return stringified_stack
 }

@@ -9,14 +9,21 @@ import (
   _"Languages/Utils"
 )
 
-//TODO
-// - controllare se uno stato esiste già, in quel caso la goto non creerà lo stato, ma ritornerà lo stato già esistente così che la delta lo prenda
 func main() {
+  G := Grammar.ParseGrammar("./Grammar/Grammars/ProvaSLR1.g")
+  fmt.Println(G)
+  parser := Parsing.MakeParserBottomUpSLR1(G)
+  //fmt.Println("parser:", parser)
+  input := "aaaabb"
+  parser.Parse(input)
+}
+
+func ParsingAndLR0() {
   G := Grammar.ParseGrammar("./Grammar/Grammars/ProvaLR0.g")
   fmt.Println(G)
   parser := Parsing.MakeParserBottomUpLR0(G)
   //fmt.Println("parser:", parser)
-  input := "bb"
+  input := "aaaabb"
   parser.Parse(input)
 }
 

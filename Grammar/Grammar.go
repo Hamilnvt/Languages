@@ -705,12 +705,3 @@ func (G Grammar) IsNonTerminal(X string) bool {
   return isStringIn(X, G.NT)
 }
 
-func (prod Production) Reverse() Production {
-  reversed := make(Production, len(prod))
-  copy(reversed, prod)
-  for i, j := 0, len(reversed)-1; i < j; i, j = i+1, j-1 {
-    reversed[i], reversed[j] = reversed[j], reversed[i]
-  }
-  return reversed
-}
-

@@ -734,18 +734,19 @@ func MakeCanonicAutomatonLR0(grammar_ptr *Grammar.Grammar) CALR0 {
     }
     fmt.Println("Terms to go", terms_to_go)
 
-    //TODO c'è qualcosa che non va qui, negli indifi in particolare e in IsAlreadyIn
     for term := range terms_to_go {
       new_state := Goto(&grammar, &dotTable, current_state, term)
-      fmt.Printf("New state\n%v\n", new_state)
+      fmt.Printf("New state with %v\n%v\n", term, new_state)
       state_already_in := IsAlreadyIn(new_state, CA.States)
       if state_already_in == nil {
+        fmt.Println("It's not in States")
         new_state.Index = len(CA.States)
         CA.States = append(CA.States, new_state)
         queue.Enqueue(new_state)
         CA.Delta[DeltaKey{State:current_state.Index, Term:term}] = new_state.Index
       } else {
-        CA.Delta[DeltaKey{State:current_state.Index, Term:term}] = current_state.Index
+        fmt.Printf("It's in States: \n")
+        CA.Delta[DeltaKey{State:current_state.Index, Term:term}] = state_already_in.Index
       }
     }
   }
@@ -783,7 +784,7 @@ func (item ItemLR0) IsIn(state CA_State) bool {
 
 func Closure(grammar *Grammar.Grammar, dotTable *DotTable, state CA_State) CA_State {
   already_closed_non_terminal := make([]Grammar.NonTerminal, 0)
-  fmt.Printf("Taking the closure of\n[\n%v]\n", state.Items)
+  fmt.Printf("Taking the closure of\n[\n%v\n]\n", state.Items)
   i := 0
   for i < len(state.Items) {
     item := state.Items[i]

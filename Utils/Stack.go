@@ -38,3 +38,7 @@ func (stack *Stack[S]) Pop() (S, error) {
     return elt, nil
   }
 }
+
+func (stack Stack[S]) GetStack() []S {
+  return stack.stack
+}
