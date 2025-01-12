@@ -15,7 +15,22 @@ const (
 
 type Terminal = string
 type NonTerminal = string
-type Production = []string
+type Production []string
+
+func (prod1 Production) Equals(prod2 Production) bool {
+  if len(prod1) != len(prod2) {
+    return false
+  }
+  equals := true
+  i := 0
+  for equals && i < len(prod1) {
+    if prod1[i] != prod2[i] {
+      equals = false
+    }
+    i++
+  }
+  return equals
+}
 
 type Grammar struct {
   S string

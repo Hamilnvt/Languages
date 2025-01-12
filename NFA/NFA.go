@@ -7,6 +7,7 @@ import (
   "strconv"
   "testing"
   "Languages/Grammar"
+  "Languages/Utils"
 )
 
 const (
@@ -447,10 +448,10 @@ func (N DFA) Minimize() DFA {
     } else {
       found := false
       for i, class := range statesToFuse {
-        if isInSlice(pair.a, class) || isInSlice(pair.b, class) {
-          if isInSlice(pair.a, class) && !isInSlice(pair.b, class) {
+        if Utils.IsInSlice(pair.a, class) || Utils.IsInSlice(pair.b, class) {
+          if Utils.IsInSlice(pair.a, class) && !Utils.IsInSlice(pair.b, class) {
             statesToFuse[i] = append(class, pair.b)
-          } else if !isInSlice(pair.a, class) && isInSlice(pair.b, class) {
+          } else if !Utils.IsInSlice(pair.a, class) && Utils.IsInSlice(pair.b, class) {
             statesToFuse[i] = append(class, pair.a)
           }
           found = true
@@ -486,7 +487,7 @@ func (N DFA) Minimize() DFA {
       }
     }
     new_state := N_min.AddState(fmt.Sprintf("q%v", N_min.n), new_state_final)
-    if isInSlice(N_min.InitialState, class) {
+    if Utils.IsInSlice(N_min.InitialState, class) {
       if initialStateHasChanged {
         panic("NFA can't have more than one initial state")
       } else {
@@ -496,11 +497,11 @@ func (N DFA) Minimize() DFA {
     }
     //fmt.Println("New state:", new_state)
     for _, q := range N_min.States {
-      if !isInSlice(q.Index, class) {
+      if !Utils.IsInSlice(q.Index, class) {
         for _, a := range N_min.Sigma {
           d := N_min.Delta(q.Index, string(a))
           if d == -1 {
-            if isInSlice(d, class) {
+            if Utils.IsInSlice(d, class) {
               N_min.removeTransition(string(a), q.Index, d)
               N_min.AddTransition(string(a), q.Index, new_state.Index)
             }
@@ -515,7 +516,7 @@ func (N DFA) Minimize() DFA {
           N_min.removeTransition(string(a), q, d)
           _, ok := N_min.States[new_state.Index].adjac[string(a)]
           if !ok {
-            if isInSlice(d, class) {
+            if Utils.IsInSlice(d, class) {
               N_min.AddTransition(string(a), new_state.Index, new_state.Index)
             } else {
               N_min.AddTransition(string(a), new_state.Index, d)
@@ -531,18 +532,6 @@ func (N DFA) Minimize() DFA {
     }
   }
   return N_min
-}
-
-func isInSlice[S comparable](n S, slice []S) bool {
-  i := 0
-  found := false
-  for !found && i < len(slice) {
-    if slice[i] == n {
-      found = true
-    }
-    i++
-  }
-  return found
 }
 
 func (N NFA) String() (res string) {
@@ -562,6 +551,7 @@ type ItemLR0 struct {
   A Grammar.NonTerminal
   Prod Grammar.Production
   Dot int
+  ID int
 }
 
 func (item ItemLR0) String() string {
@@ -575,55 +565,229 @@ func (item ItemLR0) String() string {
   } else {
     prod_with_dot = strings.Join(item.Prod[:item.Dot], " ")+" . "+strings.Join(item.Prod[item.Dot:], " ")
   }
-  return fmt.Sprintf("[%v -> %v]", item.A, prod_with_dot)
+  return fmt.Sprintf("[%v -> %v] (%v)", item.A, prod_with_dot, item.ID)
 }
 
-type CA_State []ItemLR0
-func (Items CA_State) String() (res string) {
-  for i, item := range Items {
+type DotTableKey struct {
+  X string
+  Prod string
+  Dot int
+}
+type DotTable map[DotTableKey]int
+
+func (table DotTable) String() (res string) {
+  res += fmt.Sprintf("Printing DotTable\n")
+  for key, value := range table {
+    item := ItemLR0{
+      A: key.X,
+      Prod: strings.Split(key.Prod, " "),
+      Dot: key.Dot,
+      ID: value,
+    }
+    res += fmt.Sprintln(item)
+  }
+  return
+}
+
+func MakeDotTable(grammar *Grammar.Grammar) DotTable {
+  table := make(DotTable)
+  counter := 0
+  for _, nt := range grammar.NT {
+    for _, prod := range grammar.R[nt] {
+      for i := 0; i <= len(prod); i++ {
+        prod_str := strings.Join(prod, " ")
+        if len(prod) == 1 && prod[0] == EPS {
+          if i == 1 {
+            continue; 
+          }
+          prod_str = ""
+        }
+        key := DotTableKey{
+          X: nt,
+          Prod: prod_str,
+          Dot: i,
+        }
+        //fmt.Println("key", key)
+        table[key] = counter
+        counter++
+      }
+    }
+  }
+  return table
+}
+
+func IsAlreadyIn(state CA_State, states []CA_State) *CA_State {
+  prods_state := make([]int, len(state.Items))
+  for i := 0; i < len(state.Items); i++ {
+    prods_state[i] = state.Items[i].ID
+  }
+  fmt.Println(prods_state)
+  for i, comp_state := range states {
+    found := true
+    for j := 0; j < len(comp_state.Items); j++ {
+      if !Utils.IsInSlice(comp_state.Items[j].ID, prods_state) {
+        found = false
+      }
+    }
+    if found {
+      return &states[i]
+    }
+  }
+  return nil
+}
+
+
+func GetItemID(dotTable *DotTable, item ItemLR0) int {
+  fmt.Println("Getting ID of", item.A, item.Prod, item.Dot)
+  key := DotTableKey{
+    X: item.A,
+    Prod: strings.Join(item.Prod, " "),
+    Dot: item.Dot,
+  }
+  return (*dotTable)[key]
+}
+
+type CA_State struct {
+  Index int
+  Items []ItemLR0
+}
+
+func (state CA_State) String() (res string) {
+  for i, item := range state.Items {
     res += fmt.Sprintf("%v. %v\n", i, item)
   }
   return
 }
 
-func MakeCanonicAutomatonLR0(grammar *Grammar.Grammar) DFA {
-  CA := DFA{}
-  fmt.Println(CA)
+
+type DeltaKey struct {
+  State int
+  Term string
+}
+
+type CALR0 struct {
+  States []CA_State
+  Delta map[DeltaKey]int
+}
+
+func (CA CALR0) String() (res string) {
+  res += fmt.Sprintf("\nPrinting Canonic Automaton LR0\n")
+  res += fmt.Sprintf("States:\n")
+  for _, state := range CA.States {
+    res += fmt.Sprintf("State %v:\n%v\n", state.Index, state)
+  }
+  res += fmt.Sprintf("Deltas:\n")
+  i := 0
+  for key, value := range CA.Delta {
+    res += fmt.Sprintf("%v: %v -%v-> %v\n", i, key.State, key.Term, value)
+    i++
+  }
+  return
+}
+
+func (CA CALR0) GetStateByIndex(index int) *CA_State {
+  for i := 0; i < len(CA.States); i++ {
+    if CA.States[i].Index == index {
+      return &CA.States[i]
+    }
+  }
+  return nil
+}
+
+func MakeCanonicAutomatonLR0(grammar_ptr *Grammar.Grammar) CALR0 {
+  CA := CALR0{
+    States: make([]CA_State, 1),
+    Delta: make(map[DeltaKey]int),
+  }
+
+  grammar := *grammar_ptr
+  initial_rule := Grammar.MakeRule("ITLR0 -> "+grammar.S)
+  New_Terminals := []Grammar.NonTerminal{"ITLR0"}
+  grammar.NT = append(New_Terminals, grammar.NT...)
+  grammar.AddRule(initial_rule)
+  dotTable := MakeDotTable(&grammar)
+  fmt.Println(dotTable)
+
+  initial_item := ItemLR0{
+    A: "ITLR0",
+    Prod: Grammar.Production{grammar.S},
+    Dot: 0,
+  }
+
+  initial_state := Closure(&grammar, &dotTable, CA_State{Items:[]ItemLR0{initial_item}, Index: 0})
+
+  CA.States[0] = initial_state
+  fmt.Printf("Initial state:\n%v\n", initial_state)
+  
+  queue := Utils.Queue[CA_State]{}
+  queue.Enqueue(initial_state)
+
+  for !queue.IsEmpty() {
+    current_state, _ := queue.Dequeue()
+    fmt.Println(current_state)
+
+    terms_to_go := make(map[string]bool)
+    for _, item := range current_state.Items {
+      if item.Dot < len(item.Prod) {
+        terms_to_go[item.Prod[item.Dot]] = true
+      }
+    }
+    fmt.Println("Terms to go", terms_to_go)
+
+    for term := range terms_to_go {
+      new_state := Goto(&grammar, &dotTable, current_state, term)
+      fmt.Printf("New state\n%v\n", new_state)
+      state_already_in := IsAlreadyIn(new_state, CA.States)
+      if state_already_in == nil {
+        new_state.Index = len(CA.States)
+        CA.States = append(CA.States, new_state)
+        queue.Enqueue(new_state)
+        CA.Delta[DeltaKey{State:current_state.Index, Term:term}] = new_state.Index
+      } else {
+        CA.Delta[DeltaKey{State:current_state.Index, Term:term}] = current_state.Index
+      }
+    }
+  }
 
   return CA
 }
 
-func (item ItemLR0) IsIn(Items CA_State) bool {
-  fmt.Printf("Is %v in\n%v\n", item, Items)
-  for _, comp_item := range Items {
-    //fmt.Printf("comparing to\n%v\n", comp_item)
-    if item.A == comp_item.A && item.Dot == comp_item.Dot {
-      same := true
-      if len(item.Prod) != len(comp_item.Prod) {
-        same = false
-      } else {
-        for i := 0; i < len(item.Prod); i++ {
-          if item.Prod[i] != comp_item.Prod[i] {
-            same = false
-          }
-        }
-      }
-      if same {
-        return true
-      }
+func (item ItemLR0) IsIn(state CA_State) bool {
+  fmt.Printf("Is %v in\n%v\n", item, state)
+  for _, comp_item := range state.Items {
+    if item.ID == comp_item.ID {
+      return true
     }
   }
+  //for _, comp_item := range Items {
+  //  //fmt.Printf("comparing to\n%v\n", comp_item)
+  //  if item.A == comp_item.A && item.Dot == comp_item.Dot {
+  //    same := true
+  //    if len(item.Prod) != len(comp_item.Prod) {
+  //      same = false
+  //    } else {
+  //      for i := 0; i < len(item.Prod); i++ {
+  //        if item.Prod[i] != comp_item.Prod[i] {
+  //          same = false
+  //        }
+  //      }
+  //    }
+  //    if same {
+  //      return true
+  //    }
+  //  }
+  //}
   return false
 }
 
-func Closure(grammar *Grammar.Grammar, Items CA_State) CA_State {
+func Closure(grammar *Grammar.Grammar, dotTable *DotTable, state CA_State) CA_State {
   already_closed_non_terminal := make([]Grammar.NonTerminal, 0)
-  fmt.Printf("Taking the closure of\n[\n%v]\n", Items)
+  fmt.Printf("Taking the closure of\n[\n%v]\n", state.Items)
   i := 0
-  for i < len(Items) {
-    item := Items[i]
+  for i < len(state.Items) {
+    item := state.Items[i]
     if len(item.Prod) != 0 && item.Dot < len(item.Prod) {
-      if X := item.Prod[item.Dot]; grammar.IsNonTerminal(X) && !isInSlice(X, already_closed_non_terminal) {
+      if X := item.Prod[item.Dot]; grammar.IsNonTerminal(X) && !Utils.IsInSlice(X, already_closed_non_terminal) {
         fmt.Println("closure", i, ": cosidering item", item)
         for _, X_prod := range grammar.R[X] {
           new_prod := X_prod
@@ -635,9 +799,10 @@ func Closure(grammar *Grammar.Grammar, Items CA_State) CA_State {
             Prod: new_prod,
             Dot: 0,
           }
-          if !new_item.IsIn(Items) {
+          new_item.ID = GetItemID(dotTable, new_item)
+          if !new_item.IsIn(state) {
             fmt.Println(new_item, "non c'è, lo aggiungo")
-            Items = append(Items, new_item)
+            state.Items = append(state.Items, new_item)
           } else {
             fmt.Println(new_item, "c'è già")
           }
@@ -647,13 +812,16 @@ func Closure(grammar *Grammar.Grammar, Items CA_State) CA_State {
     }
     i++
   } 
-  return Items
+  return state
 }
 
-func Goto(grammar *Grammar.Grammar, Items CA_State, X Grammar.NonTerminal) CA_State {
+func Goto(grammar *Grammar.Grammar, dotTable *DotTable, state CA_State, X Grammar.NonTerminal) CA_State {
   fmt.Println("Goto with", X)
-  J := make(CA_State, 0)
-  for _, item := range Items {
+  J := CA_State{
+    Items: make([]ItemLR0, 0),
+    Index: -1,  
+  }
+  for _, item := range state.Items {
     fmt.Printf("goto: Considering item\n%v\n", item)
     if item.Dot < len(item.Prod) && item.Prod[item.Dot] == X {
       new_item := ItemLR0{
@@ -661,12 +829,13 @@ func Goto(grammar *Grammar.Grammar, Items CA_State, X Grammar.NonTerminal) CA_St
         Prod: item.Prod,
         Dot: item.Dot+1,
       }
+      new_item.ID = GetItemID(dotTable, new_item)
       fmt.Printf("New item:\n%v\n", new_item)
-      J = append(J, new_item)
+      J.Items = append(J.Items, new_item)
     }
   }
   fmt.Println("Goto without closure:", J)
-  return Closure(grammar, J)
+  return Closure(grammar, dotTable, J)
 }
 
 // TESTS

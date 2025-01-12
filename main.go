@@ -6,7 +6,7 @@ import (
   "Languages/Grammar"
   "Languages/LexicalAnalyzer"
   "Languages/Parsing"
-  "Languages/Utils"
+  _"Languages/Utils"
 )
 
 //TODO
@@ -14,69 +14,15 @@ import (
 func main() {
   G := Grammar.ParseGrammar("./Grammar/Grammars/ProvaLR0.g")
   fmt.Println(G)
+  parser := Parsing.MakeParserBottomUpLR0(G)
+  fmt.Println("parser:", parser)
+}
 
-  initial_rule := Grammar.MakeRule("InitialSymbol_LR0 -> S")
-  G.NT = append(G.NT, "InitialSymbol_LR0")
-  G.AddRule(initial_rule)
-  initial_item := NFA.ItemLR0{
-    A: "ITLR0",
-    Prod: Grammar.Production{G.S},
-    Dot: 0,
-  }
-
-  initial_state := NFA.Closure(&G, NFA.CA_State{initial_item})
-  states := make([]NFA.CA_State, 1)
-
-  type DeltaPair struct {
-    state *NFA.CA_State
-    term string
-  }
-
-  delta := make(map[DeltaPair]*NFA.CA_State)
-  states[0] = initial_state
-  fmt.Printf("Initial state:\n%v\n", initial_state)
-  
-  queue := Utils.Queue[NFA.CA_State]{}
-  queue.Enqueue(initial_state)
-
-  for !queue.IsEmpty() {
-    current_state, _ := queue.Dequeue()
-    fmt.Println(current_state)
-
-    ttg_map := make(map[string]bool)
-    fmt.Println(ttg_map)
-    for _, item := range current_state {
-      if item.Dot < len(item.Prod) {
-        ttg_map[item.Prod[item.Dot]] = true
-      }
-    }
-    terms_to_go := make(Grammar.Production, len(ttg_map))
-    i := 0
-    for term := range ttg_map {
-      terms_to_go[i] = term
-      i++
-    }
-    fmt.Println("Terms to go", terms_to_go)
-
-    for _, term := range terms_to_go {
-      new_state := NFA.Goto(&G, current_state, term)
-      fmt.Printf("New state\n%v\n", new_state)
-      states = append(states, new_state)
-      //TODO se è uguale non aggiungerlo, giustamente, dico io
-      queue.Enqueue(new_state)
-      delta[DeltaPair{state:&states[0], term:term}] = &states[len(states)-1]
-    }
-    fmt.Println("States after to go:")
-    for i, state := range states {
-      fmt.Printf("State %v:\n%v\n", i, state)
-    }
-  }
-  //fmt.Println("Delta after to go:")
-  //for key, value := range delta {
-  //  fmt.Printf("Delta: {\nfrom\n%v\nto\n%v\nwith '%v'\n}\n", key.state, value, key.term)
-  //}
-  //CA := NFA.MakeCanonicAutomatonLR0(&G)
-  //fmt.Println(CA)
+func canonic_automaton_LR0() {
+  G := Grammar.ParseGrammar("./Grammar/Grammars/ProvaLR0.g")
+  fmt.Println(G)
+  CA := NFA.MakeCanonicAutomatonLR0(&G)
+  fmt.Println(CA)
 }
 
 func ParsingAndLL1() {
