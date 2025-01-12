@@ -1,3 +1,5 @@
 GRAMMAR:
 
-S -> a S b | a b
+S -> A B
+A -> a | B
+B -> b

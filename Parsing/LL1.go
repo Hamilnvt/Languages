@@ -55,8 +55,6 @@ func (parser Parser_LL1) PrintTable() {
 func MakeParserTopDownLL1(grammar Grammar.Grammar) (Parser_LL1, error) {
   parser := Parser_LL1{
     grammar: grammar,
-    stack: Utils.Stack[string]{},
-    input: make([]string, 0),
     table: make(TDParsingTable),
   }
 

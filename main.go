@@ -15,7 +15,9 @@ func main() {
   G := Grammar.ParseGrammar("./Grammar/Grammars/ProvaLR0.g")
   fmt.Println(G)
   parser := Parsing.MakeParserBottomUpLR0(G)
-  fmt.Println("parser:", parser)
+  //fmt.Println("parser:", parser)
+  input := "bb"
+  parser.Parse(input)
 }
 
 func canonic_automaton_LR0() {

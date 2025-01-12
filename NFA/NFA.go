@@ -734,6 +734,7 @@ func MakeCanonicAutomatonLR0(grammar_ptr *Grammar.Grammar) CALR0 {
     }
     fmt.Println("Terms to go", terms_to_go)
 
+    //TODO c'è qualcosa che non va qui, negli indifi in particolare e in IsAlreadyIn
     for term := range terms_to_go {
       new_state := Goto(&grammar, &dotTable, current_state, term)
       fmt.Printf("New state\n%v\n", new_state)

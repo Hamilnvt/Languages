@@ -4,6 +4,7 @@ import (
   "fmt"
   "os"
   "strings"
+  "errors"
   "text/tabwriter"
   "Languages/NFA"
   "Languages/Grammar"
@@ -69,32 +70,37 @@ func (parser Parser_LR0) PrintTable(grammar *Grammar.Grammar, CA *NFA.CALR0) {
 	w.Flush()
 }
 
-type Parser_LR0 struct {
-  table BUParsingTable 
-  terms_stack Utils.Stack[string]
-  states_stack Utils.Stack[int]
-}
-
 type NumberedProdKey struct {
   A Grammar.NonTerminal
   prod string
 }
 
+type NumberedProdTable map[NumberedProdKey]int
+
+func (table NumberedProdTable) getProd(num int) (NumberedProdKey, error) {
+  for key, value := range table {
+    if value == num {
+      return key, nil
+    }
+  }
+  var empty NumberedProdKey
+  return empty, errors.New("There isn't a production associated with this number")
+}
+
+type Parser_LR0 struct {
+  table BUParsingTable 
+  terms_stack Utils.Stack[string]
+  states_stack Utils.Stack[int]
+  input []string
+  numbered_prods NumberedProdTable
+}
+
 func MakeParserBottomUpLR0(grammar Grammar.Grammar) Parser_LR0 {
   parser := Parser_LR0{
     table: make(BUParsingTable),
-    stack: Utils.Stack[string]{},
+    numbered_prods: make(map[NumberedProdKey]int),
   }
-  CA := NFA.MakeCanonicAutomatonLR0(&grammar)
-  fmt.Println(CA)
 
-  grammar_terms := make([]string, 0)
-  grammar_terms = append(grammar_terms, grammar.T...)
-  grammar_terms = append(grammar_terms, "$")
-  grammar_terms = append(grammar_terms, grammar.NT...)
-  //fmt.Println("Grammar terms:", grammar_terms)
-
-  numbered_prods := make(map[NumberedProdKey]int)
   counter := 1
   for _, nt := range grammar.NT {
     for _, prod := range grammar.R[nt] {
@@ -103,11 +109,20 @@ func MakeParserBottomUpLR0(grammar Grammar.Grammar) Parser_LR0 {
         A: nt,
         prod: strings.Join(prod, " "),
       }
-      numbered_prods[key] = counter
+      parser.numbered_prods[key] = counter
       counter++
     }
   }
-  fmt.Println(numbered_prods)
+  fmt.Println(parser.numbered_prods)
+
+  CA := NFA.MakeCanonicAutomatonLR0(&grammar)
+  fmt.Println(CA)
+
+  grammar_terms := make([]string, 0)
+  grammar_terms = append(grammar_terms, grammar.T...)
+  grammar_terms = append(grammar_terms, "$")
+  grammar_terms = append(grammar_terms, grammar.NT...)
+  //fmt.Println("Grammar terms:", grammar_terms)
 
   for _, state := range CA.States {
     for _, term := range grammar_terms {
@@ -165,7 +180,7 @@ func MakeParserBottomUpLR0(grammar Grammar.Grammar) Parser_LR0 {
           } else {
             entry := BUTableEntry{
               action: REDUCE,
-              num: numbered_prods[prod_key],
+              num: parser.numbered_prods[prod_key],
             }
             parser.table[key] = entry
             fmt.Println(key, "=", entry)
@@ -249,8 +264,91 @@ func MakeParserBottomUpLR0(grammar Grammar.Grammar) Parser_LR0 {
 }
 
 func (parser Parser_LR0) Parse(input string) (ParseTree, error) {
-  parser.stack = Utils.Stack[string]{}
-  parser.stack.Push(parser.grammar.S)
+  parser.terms_stack = Utils.Stack[string]{}
+
+  parser.states_stack = Utils.Stack[int]{}
+  parser.states_stack.Push(0)
+
+  for _, c := range input {
+    parser.input = append(parser.input, string(c))
+  }
+  parser.input = append(parser.input, "$")
+  ic := 0
+  fmt.Printf("Parsing '%v'\n", input)
+
+  var current_state int
+  var err error
+  accepted := false
+  w := tabwriter.NewWriter(os.Stdout, 0, 8, 2, ' ', 0)
+  defer w.Flush()
+  fmt.Fprintln(w, "STATES\t|  TERMS\t|  INPUT\t|  ACTION\t|  OUTPUT")
+  for !accepted {
+    //output := false
+    current_state, err = parser.states_stack.Top()
+    fmt.Fprintf(w, "%v\t|  %v\t|  %v\t|  ", parser.states_stack, parser.terms_stack, strings.Join(parser.input, "")[ic:]) 
+    if err != nil {
+      panic("Input didn't match (Empty stack)")
+    }
+    key := BUTableKey{
+      state: current_state,
+      term: parser.input[ic],
+    }
+    cell := parser.table[key]
+    //fmt.Println(key, cell)
+    switch cell.action {
+      case ACCEPT:
+        fmt.Fprintln(w, "ACCEPT\t|  String accepted!")
+        accepted = true
+      case SHIFT:
+        fmt.Fprintf(w, "SHIFT %v\t|\n", cell.num)
+        parser.states_stack.Push(cell.num)
+        parser.terms_stack.Push(parser.input[ic])
+        ic++
+      case REDUCE:
+        prod_key, err := parser.numbered_prods.getProd(cell.num)
+        if err != nil {
+          panic(err)
+        }
+        //fmt.Println("Prod key:", prod_key)
+        prod := Grammar.Production(strings.Split(prod_key.prod, " "))
+        //fmt.Println("Prod:", prod)
+        popped_prod := make(Grammar.Production, len(prod))
+        for i := 0; i < len(prod); i++ {
+          _, err_s := parser.states_stack.Pop()
+          if err_s != nil {
+            panic("Input didn't match (Empty stack)")
+          }
+          term, err_t := parser.terms_stack.Pop()
+          if err_t != nil {
+            panic("Input didn't match (Empty stack)")
+          }
+          popped_prod[i] = term
+        }
+        popped_prod = popped_prod.Reverse()
+        //fmt.Println("Popped prod:", popped_prod)
+        if !prod.Equals(popped_prod) {
+          panic("Input didn't match (Prods are not equal)")
+        }
+        from_state, err_top := parser.states_stack.Top() 
+        if err_top != nil {
+          panic("Input didn't match (Empty stack)")
+        }
+        goto_key := BUTableKey{
+          state: from_state,
+          term: prod_key.A,
+        }
+        goto_state := parser.table[goto_key]
+        if goto_state.action != GOTO {
+          panic("Input didn't match (Mismatch cell action: want GOTO)")
+        }
+        parser.states_stack.Push(goto_state.num)
+        parser.terms_stack.Push(prod_key.A)
+        fmt.Fprintf(w, "REDUCE %v\t|  Output: %v -> %v\n", cell.num, prod_key.A, strings.Join(prod, ""))
+
+      default:
+        panic("Input  didn't match (Blank cell or something else)")
+    }
+  }
 
   return ParseTree{}, nil
 }

@@ -55,6 +55,8 @@ nah - [ ] commenti anche a metà riga (mettere # nei simboli slashati e migliora
 
 ## Parsing
 [ ] abstract parsing tree from the concrete one
+[ ] i parser devono leggere i token, non i singoli caratteri
+[ ] risolvere problema: quando lo stato esiste già non lo segna correttamente nella delta
 
 # Cose da leggere
 
