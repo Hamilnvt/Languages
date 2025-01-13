@@ -10,11 +10,14 @@ import (
 )
 
 func main() {
+  ParsingAndSLR1()
+}
+
+func ParsingAndSLR1() {
   G := Grammar.ParseGrammar("./Grammar/Grammars/ProvaSLR1.g")
   fmt.Println(G)
   parser := Parsing.MakeParserBottomUpSLR1(G)
-  //fmt.Println("parser:", parser)
-  input := "aaaabb"
+  input := "acb"
   parser.Parse(input)
 }
 
