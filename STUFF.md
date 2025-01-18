@@ -35,7 +35,7 @@
     > sorge un dilemma: se voglio le mappe si può fare nei seguenti modi:
     1. 2 mappe: una con le label e una con gli indici (quindi una mappa e un array, suppongo)
     2. 1 mappa[string]: ha il doppio degli elementi e map[label] = elt = map[index], con qualche accortezza questo non è male (func getEltAt(i int) = map[label] = elt, dove getEltAt passa l'intero come stringa)
-[ ] Sigma sarà uno slice di string, dove ogni stringa avrà lunghezza 1
+[ ] Sigma sarà uno slice di string
 [ ] func isDFA che controlla se non ci sono transizioni epsilon e se per ogni stato c'è una transizione per ogni terminale
 [ ] func cat: concatena due NFA se il primo ha un solo stato finale (fonde f1 e i2)
 
@@ -57,7 +57,7 @@ nah - [ ] commenti anche a metà riga (mettere # nei simboli slashati e migliora
 [ ] abstract parsing tree from the concrete one
 [ ] i parser devono leggere i token, non i singoli caratteri
 [x] risolvere problema: quando lo stato esiste già non lo segna correttamente nella delta
-[ ] stampare gli stack LR al contrario
+[x] stampare gli stack LR al contrario
 
 # Cose da leggere
 

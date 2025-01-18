@@ -14,10 +14,10 @@ func main() {
 }
 
 func ParsingAndSLR1() {
-  G := Grammar.ParseGrammar("./Grammar/Grammars/ProvaSLR1.g")
+  G := Grammar.ParseGrammar("./Grammar/Grammars/RegExpGrammarLL1.g")
   fmt.Println(G)
   parser := Parsing.MakeParserBottomUpSLR1(G)
-  input := "acb"
+  input := "[a-b]*b"
   parser.Parse(input)
 }
 

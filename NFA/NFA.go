@@ -553,6 +553,7 @@ type ItemLR0 struct {
   Dot int
   ID int
 }
+const InitialTermLR0 string = "__ITLR0__"
 
 func (item ItemLR0) String() string {
   var prod_with_dot string
@@ -701,15 +702,15 @@ func MakeCanonicAutomatonLR0(grammar_ptr *Grammar.Grammar) CALR0 {
   }
 
   grammar := *grammar_ptr
-  initial_rule := Grammar.MakeRule("ITLR0 -> "+grammar.S)
-  New_Terminals := []Grammar.NonTerminal{"ITLR0"}
+  initial_rule := Grammar.MakeRule(InitialTermLR0+" -> "+grammar.S)
+  New_Terminals := []Grammar.NonTerminal{InitialTermLR0}
   grammar.NT = append(New_Terminals, grammar.NT...)
   grammar.AddRule(initial_rule)
   dotTable := MakeDotTable(&grammar)
   fmt.Println(dotTable)
 
   initial_item := ItemLR0{
-    A: "ITLR0",
+    A: InitialTermLR0,
     Prod: Grammar.Production{grammar.S},
     Dot: 0,
   }

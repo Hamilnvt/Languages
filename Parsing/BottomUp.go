@@ -186,39 +186,38 @@ func MakeParserBottomUpLR0(grammar Grammar.Grammar) Parser_LR0 {
         }
       }
 
-      //TODO per ora prende solo il primo item del tipo A -> a. (ma dovrebbe prenderli tutti)
       // REDUCE
       //fmt.Println("Reduce:")
-      if grammar.IsTerminal(term) || term == "$" {
-        found := false
+      if term == "$" || grammar.IsTerminal(term) {
         var prod_key NumberedProdKey
-        i := 0
-        for !found && i < len(state.Items) {
+        for i := 0; i < len(state.Items); i++ {
           item := state.Items[i]
-          if item.A != "ITLR0" && item.Dot == len(item.Prod) {
-            found = true    
+          if item.A != NFA.InitialTermLR0 && item.Dot == len(item.Prod) {
+            var prod string
+            //fmt.Println("Item prod:", item.Prod)
+            if len(item.Prod) == 0 {
+              prod = Grammar.EPS
+            } else {
+              prod = strings.Join(item.Prod, " ")
+            }
             prod_key = NumberedProdKey{
               A: item.A,
-              prod: strings.Join(item.Prod, " "),
+              prod: prod,
             }
-          } else {
-            i++
-          }
-        }
-        if found {
-          key := BUTableKey{
-            state: state.Index,
-            term: term,
-          }
-          if _, ok := parser.table[key]; ok {
-            panic("Grammar is not LR(0) :(")
-          } else {
-            entry := BUTableEntry{
-              action: REDUCE,
-              num: parser.numbered_prods[prod_key],
+            key := BUTableKey{
+              state: state.Index,
+              term: term,
             }
-            parser.table[key] = entry
-            fmt.Println(key, "=", entry)
+            if _, ok := parser.table[key]; ok {
+              panic("Grammar is not LR(0) :(")
+            } else {
+              entry := BUTableEntry{
+                action: REDUCE,
+                num: parser.numbered_prods[prod_key],
+              }
+              parser.table[key] = entry
+              fmt.Println(key, "=", entry)
+            }
           }
         }
       }
@@ -230,7 +229,7 @@ func MakeParserBottomUpLR0(grammar Grammar.Grammar) Parser_LR0 {
         i := 0
         for !found && i < len(state.Items) {
           item := state.Items[i]
-          if item.A == "ITLR0" && len(item.Prod) == 1 && item.Prod[0] == grammar.S && item.Dot == len(item.Prod) {
+          if item.A == NFA.InitialTermLR0 && len(item.Prod) == 1 && item.Prod[0] == grammar.S && item.Dot == len(item.Prod) {
             found = true    
           } else {
             i++
@@ -434,7 +433,7 @@ func MakeParserBottomUpSLR1(grammar Grammar.Grammar) Parser_SLR1 {
         i := 0
         for !found && i < len(state.Items) {
           item := state.Items[i]
-          if item.A == "ITLR0" && len(item.Prod) == 1 && item.Prod[0] == grammar.S && item.Dot == len(item.Prod) {
+          if item.A == NFA.InitialTermLR0 && len(item.Prod) == 1 && item.Prod[0] == grammar.S && item.Dot == len(item.Prod) {
             found = true    
           } else {
             i++
@@ -484,16 +483,12 @@ func MakeParserBottomUpSLR1(grammar Grammar.Grammar) Parser_SLR1 {
       }
     }
 
-    //TODO per ora prende solo il primo item del tipo A -> a. (ma dovrebbe prenderli tutti)
     // REDUCE
     //fmt.Println("Reduce:")
-    found := false
     var prod_key NumberedProdKey
-    i := 0
-    for !found && i < len(state.Items) {
+    for i := 0; i < len(state.Items); i++ {
       item := state.Items[i]
-      if item.A != "ITLR0" && item.Dot == len(item.Prod) {
-        found = true    
+      if item.A != NFA.InitialTermLR0 && item.Dot == len(item.Prod) {
         var prod string
         fmt.Println("Item prod:", item.Prod)
         if len(item.Prod) == 0 {
@@ -505,26 +500,22 @@ func MakeParserBottomUpSLR1(grammar Grammar.Grammar) Parser_SLR1 {
           A: item.A,
           prod: prod,
         }
-      } else {
-        i++
-      }
-    }
-    if found {
-      fmt.Printf("Follow(%v) = %v\n", prod_key.A, grammar.FollowTable[prod_key.A])
-      for _, term := range grammar.FollowTable[prod_key.A] {
-        key := BUTableKey{
-          state: state.Index,
-          term: term,
-        }
-        if _, ok := parser.table[key]; ok {
-          panic("Grammar is not SLR(1) :(")
-        } else {
-          entry := BUTableEntry{
-            action: REDUCE,
-            num: parser.numbered_prods[prod_key],
+        fmt.Printf("Follow(%v) = %v\n", prod_key.A, grammar.FollowTable[prod_key.A])
+        for _, term := range grammar.FollowTable[prod_key.A] {
+          key := BUTableKey{
+            state: state.Index,
+            term: term,
           }
-          parser.table[key] = entry
-          fmt.Println(key, "=", entry)
+          if _, ok := parser.table[key]; ok {
+            panic("Grammar is not SLR(1) :(")
+          } else {
+            entry := BUTableEntry{
+              action: REDUCE,
+              num: parser.numbered_prods[prod_key],
+            }
+            parser.table[key] = entry
+            fmt.Println(key, "=", entry)
+          }
         }
       }
     }
@@ -580,60 +571,61 @@ func (parser Parser_SLR1) Parse(input string) (ParseTree, error) {
     cell := parser.table[key]
     //fmt.Println(key, cell)
     switch cell.action {
-      case ACCEPT:
-        fmt.Fprintln(w, "ACCEPT\t|  String accepted!")
-        accepted = true
-      case SHIFT:
-        fmt.Fprintf(w, "SHIFT %v\t|\n", cell.num)
-        parser.states_stack.Push(cell.num)
-        parser.terms_stack.Push(parser.input[ic])
-        ic++
-      case REDUCE:
-        fmt.Println("Getting prod number", cell.num)
-        prod_key, err := parser.numbered_prods.getProd(cell.num)
-        if err != nil {
-          panic(err)
-        }
-        //fmt.Println("Prod key:", prod_key)
-        prod := Grammar.Production(strings.Split(prod_key.prod, " "))
-        fmt.Println("Prod:", prod)
-        if len(prod) != 1 || prod[0] != Grammar.EPS {
-          popped_prod := make(Grammar.Production, len(prod))
-          for i := 0; i < len(prod); i++ {
-            _, err_s := parser.states_stack.Pop()
-            if err_s != nil {
-              panic("Input didn't match (Empty stack)")
-            }
-            term, err_t := parser.terms_stack.Pop()
-            if err_t != nil {
-              panic("Input didn't match (Empty stack)")
-            }
-            popped_prod[i] = term
+    case ACCEPT:
+      fmt.Fprintln(w, "ACCEPT\t|  String accepted!")
+      accepted = true
+    case SHIFT:
+      fmt.Fprintf(w, "SHIFT %v\t|\n", cell.num)
+      parser.states_stack.Push(cell.num)
+      parser.terms_stack.Push(parser.input[ic])
+      ic++
+    case REDUCE:
+      fmt.Println("Getting prod number", cell.num)
+      prod_key, err := parser.numbered_prods.getProd(cell.num)
+      if err != nil {
+        panic(err)
+      }
+      //fmt.Println("Prod key:", prod_key)
+      prod := Grammar.Production(strings.Split(prod_key.prod, " "))
+      fmt.Println("Prod:", prod)
+      if len(prod) != 1 || prod[0] != Grammar.EPS {
+        popped_prod := make(Grammar.Production, len(prod))
+        for i := 0; i < len(prod); i++ {
+          _, err_s := parser.states_stack.Pop()
+          if err_s != nil {
+            panic("Input didn't match (Empty stack)")
           }
-          popped_prod = Utils.Reverse(popped_prod)
-          fmt.Println("Are prods equal:", prod, popped_prod)
-          if !prod.Equals(popped_prod) {
-            panic("Input didn't match (Prods are not equal)")
+          term, err_t := parser.terms_stack.Pop()
+          if err_t != nil {
+            panic("Input didn't match (Empty stack)")
           }
+          popped_prod[i] = term
         }
-        from_state, err_top := parser.states_stack.Top() 
-        if err_top != nil {
-          panic("Input didn't match (Empty stack)")
+        popped_prod = Utils.Reverse(popped_prod)
+        fmt.Println("Are prods equal:", prod, popped_prod)
+        if !prod.Equals(popped_prod) {
+          panic("Input didn't match (Prods are not equal)")
         }
-        goto_key := BUTableKey{
-          state: from_state,
-          term: prod_key.A,
-        }
-        goto_state := parser.table[goto_key]
-        if goto_state.action != GOTO {
-          panic("Input didn't match (Mismatch cell action: want GOTO)")
-        }
-        parser.states_stack.Push(goto_state.num)
-        parser.terms_stack.Push(prod_key.A)
-        fmt.Fprintf(w, "REDUCE %v\t|  Output: %v -> %v\n", cell.num, prod_key.A, strings.Join(prod, " "))
+      }
+      from_state, err_top := parser.states_stack.Top() 
+      if err_top != nil {
+        panic("Input didn't match (Empty stack)")
+      }
+      goto_key := BUTableKey{
+        state: from_state,
+        term: prod_key.A,
+      }
+      goto_state := parser.table[goto_key]
+      if goto_state.action != GOTO {
+        panic("Input didn't match (Mismatch cell action: want GOTO)")
+      }
+      parser.states_stack.Push(goto_state.num)
+      parser.terms_stack.Push(prod_key.A)
+      fmt.Fprintf(w, "REDUCE %v\t|  Output: %v -> %v\n", cell.num, prod_key.A, strings.Join(prod, " "))
 
-      default:
-        panic("Input  didn't match (Blank cell or something else)")
+    case BLANK:
+      panic("Input  didn't match (Blank cell)")
+    default: panic("Input didn't match (Something else found in table)")
     }
   }
 

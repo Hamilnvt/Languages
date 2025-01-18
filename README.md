@@ -31,8 +31,8 @@ Someday the set of tools will comprehend:
     - [ ] Abstract
   - [x] Top-Down parser LL(1)
   - [ ] Bottom-Up parsers:
-    - [ ] LR(0)
-    - [ ] SLR(1)
+    - [x] LR(0)
+    - [x] SLR(1)
     - [ ] LR(1)
     - [ ] LALR(1)
 
@@ -56,9 +56,11 @@ _Syntax for this is work in progress..._
 ```
 DEFINE:
 
-DEF1 "def1"
-DEF2 ("def2" DEF1)
+name1 "def1"
+name2 ("def2" name1)
 ...
+
+# name2 will be "def1def2"
 ```
 
 ## List of Rules of the Grammar.

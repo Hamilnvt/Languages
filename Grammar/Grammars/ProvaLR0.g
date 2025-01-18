@@ -1,3 +1,5 @@
 GRAMMAR:
 
-S -> a a S b | a a b
+S -> A | B
+A -> \eps
+B -> \eps

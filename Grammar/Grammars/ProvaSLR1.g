@@ -1,6 +1,5 @@
 GRAMMAR:
 
-S -> A a B b | B b A a
-A -> a A c | \eps
-B -> b B c | \eps
-
+S -> a S b | a A a | b B b | c c c
+A -> a B
+B -> b c

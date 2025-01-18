@@ -14,7 +14,7 @@ Unary -> * Unary | + Unary | ? Unary | \eps
 
 # sto provando a inserire le parentesi quadre
 C -> a | b | c | ( R ) | [ D ]
-D -> a | b | c | - E | \eps
+D -> a | b | c | D - E | \eps
 E -> a | b | c
 
 # C -> a | b | c | d | e | f | g | h | i | j | k | l | m | n | o | p | q | r | s | t | u | v | w | x | y | z | ( R )
